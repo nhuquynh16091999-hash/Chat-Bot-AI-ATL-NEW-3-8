@@ -1,0 +1,10 @@
+[Unit]
+Description=Moi 30 phut: page moi thi chuan hoa the ngay, quet het moi ngay 1 lan
+
+[Timer]
+OnCalendar=*-*-* *:05,35:00
+Persistent=false
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target

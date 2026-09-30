@@ -1,0 +1,11 @@
+[Unit]
+Description=Chuan hoa the hoi thoai Pancake: xoa the thua + sap thu tu chuan (chuan_the.py)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pancake-tool
+ExecStart=/usr/bin/python3 -u /opt/pancake-tool/chuan_the.py --tu-dong
+TimeoutStartSec=1800
+Nice=10

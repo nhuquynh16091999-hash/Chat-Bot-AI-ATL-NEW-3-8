@@ -1,0 +1,3 @@
+# Thư viện cho thư mục libs/ (ket_nap_page.py tự nối libs/ vào sys.path).
+# Cài: pip3 install --target libs -r requirements-libs.txt
+anthropic==1.0.0

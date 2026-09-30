@@ -1,0 +1,24 @@
+{
+  "_ghi_chu": "Ca chia hội thoại cho sale — chủ shop chốt 20/09/2026 (bỏ Mai Linh + Minh Thảo, ca tối gộp luôn tới sáng). Giờ là GIỜ VIỆT NAM (Asia/Ho_Chi_Minh); VPS chạy giờ Berlin nên script tự quy đổi, ĐỪNG sửa thành giờ Berlin. 'tu'/'den' bao gồm cả hai đầu; ca 'tối' vắt qua nửa đêm nên tu > den. uid PHẢI là UUID: mỗi tên có hàng chục tài khoản trùng tên (có page 9 người tên 'Từ Trang'), tài khoản thật là tài khoản có mặt trên 172/172 page — đo ngày 20/09.",
+  "ca": [
+    {
+      "ten": "sáng",
+      "tu": "08:00",
+      "den": "17:30",
+      "nguoi": [
+        {"ten": "Nguyễn Duyên", "uid": "e3d6411e-433d-4147-89f2-b4e8d884c262"},
+        {"ten": "Từ Trang",     "uid": "df1de452-74bd-4784-bfdc-99140e493120"},
+        {"ten": "Thu Hiền",     "uid": "6be8f1f2-b867-488d-9fff-df78cf591bca"}
+      ]
+    },
+    {
+      "ten": "tối",
+      "tu": "17:31",
+      "den": "07:59",
+      "nguoi": [
+        {"ten": "Quỳnh Trang", "uid": "fc29a0fe-c0ba-4d69-8875-2636284e0f85"},
+        {"ten": "An Thái",     "uid": "77b22d91-2583-4017-84c2-84dc3e682cab"}
+      ]
+    }
+  ]
+}

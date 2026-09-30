@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bảng Chi Phí AI Sale</title></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --nen:#F6F7F4; --mat:#FFFFFF; --muc:#161A15; --nhat:#6C7268; --vien:#E2E5DD;
+  --nhan:#1E6F4C; --nhan-mo:#E7F1EA; --canh:#A9701A; --canh-mo:#FAF0DE;
+  --nang:#A33528; --nang-mo:#FBEBE8; --bong:0 1px 2px rgba(22,26,21,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --nen:#101310; --mat:#191C18; --muc:#E8ECE4; --nhat:#98A092; --vien:#282C26;
+    --nhan:#5CBF8C; --nhan-mo:#16281F; --canh:#D6A24A; --canh-mo:#2A2213;
+    --nang:#E0736A; --nang-mo:#2C1917; --bong:none;
+  }
+}
+:root[data-theme="dark"]{
+  --nen:#101310; --mat:#191C18; --muc:#E8ECE4; --nhat:#98A092; --vien:#282C26;
+  --nhan:#5CBF8C; --nhan-mo:#16281F; --canh:#D6A24A; --canh-mo:#2A2213;
+  --nang:#E0736A; --nang-mo:#2C1917; --bong:none;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--nen); color:var(--muc);
+  font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.bao{max-width:1060px; margin:0 auto; padding:34px 22px 72px; display:flex;
+     flex-direction:column; gap:34px}
+h1{font-size:31px; font-weight:800; letter-spacing:-.022em; margin:0; text-wrap:balance}
+h2{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+   color:var(--nhat); margin:0 0 14px}
+p{margin:0}
+.phu{color:var(--nhat); font-size:14px}
+.so{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-variant-numeric:tabular-nums}
+
+header{display:flex; flex-direction:column; gap:8px;
+       border-bottom:1px solid var(--vien); padding-bottom:22px}
+.mao{font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+     color:var(--nhan); font-weight:700}
+
+/* Kết luận: phần duy nhất được to tiếng */
+.ketluan{background:var(--mat); border:1px solid var(--vien); border-radius:4px;
+         padding:26px 26px 24px; box-shadow:var(--bong);
+         border-left:3px solid var(--nhan); display:flex; flex-direction:column; gap:18px}
+.ketluan .hoi{font-size:19px; font-weight:700; letter-spacing:-.01em}
+.doi{display:flex; flex-wrap:wrap; gap:26px}
+.o{flex:1 1 200px; display:flex; flex-direction:column; gap:2px}
+.o .nhan-o{font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:var(--nhat);
+           font-weight:700}
+.o .to{font-size:29px; font-weight:800; letter-spacing:-.02em; line-height:1.15}
+.o .to.xanh{color:var(--nhan)}
+.o .ghi{font-size:13px; color:var(--nhat)}
+
+/* Ô số liệu */
+.luoi{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:1px;
+      background:var(--vien); border:1px solid var(--vien); border-radius:4px;
+      overflow:hidden}
+.the{background:var(--mat); padding:17px 18px; display:flex; flex-direction:column; gap:3px}
+.the .nhan-o{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase;
+             color:var(--nhat); font-weight:700}
+.the .so-to{font-size:25px; font-weight:700; letter-spacing:-.02em}
+.the .ghi{font-size:12.5px; color:var(--nhat)}
+
+/* Bảng */
+.cuon{overflow-x:auto; border:1px solid var(--vien); border-radius:4px; background:var(--mat)}
+table{width:100%; border-collapse:collapse; font-size:14px}
+th,td{text-align:right; padding:11px 15px; border-bottom:1px solid var(--vien);
+      white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--nhat);
+         font-weight:700; background:var(--nen)}
+tbody tr:last-child td{border-bottom:none}
+tr.chon td{background:var(--nhan-mo); font-weight:600}
+tr.re td{color:var(--nhan)}
+.chip{display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em;
+      text-transform:uppercase; padding:2px 7px; border-radius:3px; margin-left:8px}
+.chip.dang{background:var(--nhan-mo); color:var(--nhan)}
+.chip.re{background:var(--nhan-mo); color:var(--nhan)}
+
+/* Thanh ngang cho top câu hỏi */
+.thanhds{display:flex; flex-direction:column; gap:9px}
+.dong{display:grid; grid-template-columns:1fr 52px; gap:12px; align-items:center}
+.ten{font-size:14px}
+.ray{height:7px; background:var(--vien); border-radius:2px; overflow:hidden; margin-top:5px}
+.ray i{display:block; height:100%; background:var(--nhan); border-radius:2px}
+.pt{font-size:13px; color:var(--nhat); text-align:right}
+
+/* Danh sách kiểm */
+.kiem{display:flex; flex-direction:column; gap:1px; background:var(--vien);
+      border:1px solid var(--vien); border-radius:4px; overflow:hidden}
+.muc{background:var(--mat); padding:15px 18px; display:flex; gap:14px; align-items:flex-start}
+.dau{flex:0 0 auto; font-size:11px; font-weight:800; letter-spacing:.05em; padding:3px 8px;
+     border-radius:3px; margin-top:2px}
+.dau.ok{background:var(--nhan-mo); color:var(--nhan)}
+.dau.canh{background:var(--canh-mo); color:var(--canh)}
+.dau.nang{background:var(--nang-mo); color:var(--nang)}
+.muc .noi{display:flex; flex-direction:column; gap:2px}
+.muc b{font-weight:700}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px;
+     background:var(--nen); border:1px solid var(--vien); border-radius:3px; padding:1px 5px}
+/* Form cấu hình — chỉ hiện khi mở bằng máy chủ localhost */
+.form{background:var(--mat); border:1px solid var(--vien); border-radius:4px; padding:20px}
+.hang{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:16px}
+label{display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600}
+label .gt{font-weight:400; color:var(--nhat); font-size:12.5px}
+input,select{font-family:inherit; font-size:14px; color:var(--muc); background:var(--nen);
+  border:1px solid var(--vien); border-radius:3px; padding:8px 10px; width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--nhan);
+  outline-offset:1px}
+input[type=number],input[type=text]{font-family:"IBM Plex Mono",ui-monospace,monospace}
+button{font-family:inherit; font-size:14px; font-weight:700; color:var(--mat);
+  background:var(--nhan); border:1px solid var(--nhan); border-radius:3px;
+  padding:9px 18px; cursor:pointer}
+button.phu2{background:transparent; color:var(--nhan)}
+button[disabled]{opacity:.5; cursor:default}
+.thanhcong{background:var(--nhan-mo); color:var(--nhan); border:1px solid var(--nhan);
+  border-radius:4px; padding:12px 16px; font-size:14px; font-weight:600}
+.dangchay{background:var(--canh-mo); color:var(--canh); border:1px solid var(--canh);
+  border-radius:4px; padding:12px 16px; font-size:14px; font-weight:600}
+.trong{background:var(--mat); border:1px dashed var(--vien); border-radius:4px;
+       padding:24px; color:var(--nhat); font-size:14px; text-align:center}
+footer{border-top:1px solid var(--vien); padding-top:18px; color:var(--nhat); font-size:13px;
+       display:flex; flex-direction:column; gap:5px}
+@media (max-width:560px){ h1{font-size:25px} .o .to{font-size:24px} .bao{padding:24px 15px 56px} }
+</style>
+<div class="bao">
+<header>
+<div class="mao">Bảng điều khiển chi phí · usa</div>
+<h1>Nạp bao nhiêu thì đủ cho AI Sale?</h1>
+<p class="phu">Đo trên hội thoại thật trong 24 giờ gần nhất: 19 page có khách nhắn, trên tổng 27 page đang bật. Chạy đúng bộ luật và dựng đúng gói prompt sẽ gửi — nhưng <b>không gọi model, nên chưa tốn xu nào</b>. Cập nhật 04/09/2026 17:07.</p>
+</header>
+<section class="ketluan">
+<p class="hoi">Chạy đầy tải: khoảng <b>286 lượt gọi model mỗi ngày</b>. Tiền tuỳ model, chênh nhau 5.4 lần giữa đắt nhất và rẻ nhất.</p>
+<div class="doi">
+<div class="o"><span class="nhan-o">Giữ nguyên kimi-k3</span><span class="to so">$200–273</span><span class="ghi">mỗi tháng</span></div>
+<div class="o"><span class="nhan-o">Đổi sang kimi-k2</span><span class="to xanh so">$62–85</span><span class="ghi">mỗi tháng — rẻ hơn 3.2 lần</span></div>
+<div class="o"><span class="nhan-o">Nên nạp lần đầu</span><span class="to so">$30</span><span class="ghi">đủ ~10 ngày đầy tải với kimi-k2, đặt trần ngày $3</span></div>
+</div>
+<p class="phu">Đây là <b>khoảng</b>, không phải con số chốt: máy không có bộ tách token của Kimi/Claude nên chỉ ước được từ số ký tự. Con số chính xác hiện ra ngay sau vòng chạy có tiền đầu tiên, ở <code>ai_sale.py bao_cao</code>.</p>
+</section>
+<section><h2>Vì sao có hai con số</h2><div class="kiem">
+<div class="muc"><span class="dau ok">SÀN</span><span class="noi"><b>17 lượt/ngày — $12–16 /tháng với kimi-k3</b><span class="phu">Chỉ những lượt AI buộc phải vào cuộc ngay lúc đo: Botcake im, hoặc Botcake đã trả lời mà AI phải đọc lại xem có trúng câu khách hỏi không.</span></span></div>
+<div class="muc"><span class="dau canh">TRẦN</span><span class="noi"><b>286 lượt/ngày — $200–273 /tháng với kimi-k3</b><span class="phu">Cộng thêm 269 lượt mà hôm nay <b>sale thật đã trả lời trước nên AI tránh ra</b>. Chạy thật thì AI chỉ đợi Botcake ~90 giây rồi nhắn, tức nó vào <b>trước</b> sale — nên phần lớn số này sẽ thành lượt AI phải gọi model. <b>Lấy cột trần mà quyết ngân sách.</b></span></span></div>
+</div></section>
+<section><h2>Lưu lượng đo được</h2><div class="luoi">
+<div class="the"><span class="nhan-o">Lượt khách / ngày</span><span class="so-to so">288</span><span class="ghi">288 lượt trong 24 giờ</span></div>
+<div class="the"><span class="nhan-o">Page có khách nhắn</span><span class="so-to so">19</span><span class="ghi">trên tổng 27 page đang bật</span></div>
+<div class="the"><span class="nhan-o">Sàn — gọi model / ngày</span><span class="so-to so">17</span><span class="ghi">6% số lượt quét</span></div>
+<div class="the"><span class="nhan-o">Trần — gọi model / ngày</span><span class="so-to so">286</span><span class="ghi">99% số lượt quét</span></div>
+<div class="the"><span class="nhan-o">Gói prompt / lượt</span><span class="so-to so">25,807</span><span class="ghi">ký tự → ước 6,531–9,340 token</span></div>
+</div>
+<p class="phu" style="margin-top:10px">Trong 288 lượt quét: 8 lượt Botcake đã trả lời mà AI phải đọc lại · 9 lượt Botcake im · 269 lượt sale thật đã vào trước · 2 lượt luật bắt treo cho sale.</p>
+</section>
+<section><h2>Chọn model — chênh nhau bao nhiêu tiền</h2><div class="cuon"><table>
+<thead><tr><th>Model</th><th>Mỗi lượt</th><th>Sàn /tháng</th><th>Trần /tháng</th><th>Trần nếu đệm chạy</th></tr></thead><tbody>
+<tr class=""><td>claude-opus-5</td><td class="so">$0.0389–0.0530</td><td class="so">$20–27</td><td class="so">$334–454</td><td class="so">$111–136</td></tr>
+<tr class="chon"><td>kimi-k3<span class="chip dang">đang dùng</span></td><td class="so">$0.0233–0.0318</td><td class="so">$12–16</td><td class="so">$200–273</td><td class="so">$67–82</td></tr>
+<tr class=""><td>claude-sonnet</td><td class="so">$0.0233–0.0318</td><td class="so">$12–16</td><td class="so">$200–273</td><td class="so">$67–82</td></tr>
+<tr class=""><td>claude-haiku</td><td class="so">$0.0078–0.0106</td><td class="so">$3.97–5.40</td><td class="so">$67–91</td><td class="so">$22–27</td></tr>
+<tr class="re"><td>kimi-k2<span class="chip re">rẻ nhất</span></td><td class="so">$0.0072–0.0099</td><td class="so">$3.67–5.04</td><td class="so">$62–85</td><td class="so">$23–29</td></tr>
+</tbody></table></div>
+<p class="phu" style="margin-top:10px">Cột cuối chỉ đúng khi bộ nhớ đệm thật sự chạy — Claude thì chắc chắn, Kimi <b>chưa đo được</b> vì tài liệu của họ không mở trường bật đệm ở endpoint này. Vòng chạy thật đầu tiên sẽ nói ngay: cột “đọc đệm” bằng 0 nghĩa là đệm không chạy và phải tính theo cột trần.</p>
+</section>
+<section><h2>Khách hỏi gì</h2>
+<div class="thanhds">
+<div class="dong"><div><div class="ten">Khác / khách nói tiếp giữa hội thoại</div><div class="ray"><i style="width:100%"></i></div></div><div class="pt so">68%</div></div>
+<div class="dong"><div><div class="ten">Giá / bao nhiêu tiền</div><div class="ray"><i style="width:16%"></i></div></div><div class="pt so">11%</div></div>
+<div class="dong"><div><div class="ten">Gật đầu / trả lời tiếp giữa hội thoại</div><div class="ray"><i style="width:9%"></i></div></div><div class="pt so">6%</div></div>
+<div class="dong"><div><div class="ten">Ship / bao lâu nhận / phí ship</div><div class="ray"><i style="width:6%"></i></div></div><div class="pt so">4%</div></div>
+<div class="dong"><div><div class="ten">Còn hàng / muốn đặt</div><div class="ray"><i style="width:6%"></i></div></div><div class="pt so">4%</div></div>
+<div class="dong"><div><div class="ten">Thanh toán / COD</div><div class="ray"><i style="width:6%"></i></div></div><div class="pt so">4%</div></div>
+<div class="dong"><div><div class="ten">Đơn cũ / vận đơn / khiếu nại</div><div class="ray"><i style="width:3%"></i></div></div><div class="pt so">2%</div></div>
+<div class="dong"><div><div class="ten">Size / màu / mẫu</div><div class="ray"><i style="width:1%"></i></div></div><div class="pt so">1%</div></div>
+</div>
+<p class="phu" style="margin-top:12px">Trên 200 tin cuối của khách. Nhóm “nói tiếp giữa hội thoại” chiếm phần lớn — nghĩa là phần việc chính của AI <b>không</b> phải chào khách mới, mà là <b>nói tiếp một cuộc đã đang chạy</b>: nhớ khách đã cho gì, không hỏi lại, và chốt. Nhóm nào cao mà kịch bản “Trả lời nhanh” của page chưa có mẫu thì AI phải tự xoay — đó là chỗ đáng bổ sung trước khi cho chạy thật. Xếp nhóm bằng từ khoá đa ngữ nên là ước lượng.</p>
+</section>
+<section><h2>Tiền thật đã tiêu</h2>
+<div class="trong">Chưa tiêu đồng nào — chưa có vòng <code>ai_sale.py chay</code> nào gọi model.<br>Sau vòng chạy thật đầu tiên, chỗ này hiện tiền theo ngày và theo từng page.</div>
+</section>
+<section><h2>Sửa cấu hình ngay trên màn hình</h2><div class="trong">Trang này chỉ đọc — trang đã publish không với tới được <code>.env</code> trên máy bạn.<br>Muốn sửa model, độ sáng tạo, trần chi, dán key, khai tiền nạp và đo lại <b>trong một màn</b>, mở bản chạy tại máy:<br><br><code>python3 ai_sale.py dashboard usa --phuc-vu</code><br><br>Máy chủ chỉ nghe ở 127.0.0.1. Trên VPS thì mở đường hầm: <code>ssh -L 8765:127.0.0.1:8765 root@&lt;IP&gt;</code></div></section>
+<section><h2>Trước khi nạp tiền — kiểm lại 4 việc</h2><div class="kiem">
+<div class="muc"><span class="dau nang">THIẾU</span><span class="noi"><b>API key của kimi</b><span class="phu">Chưa dán <code>KIMI_API_KEY</code> trong <code>.env</code> — hiện AI không soạn được câu nào.</span></span></div>
+<div class="muc"><span class="dau canh">MẶC ĐỊNH</span><span class="noi"><b>Độ sáng tạo (temperature)</b><span class="phu">Đang chạy mặc định 1.0, bay nhất. Việc của AI Sale là bám kịch bản và không bịa số — nên đặt <code>AI_TEMPERATURE=0.3</code> trong <code>.env</code>.</span></span></div>
+<div class="muc"><span class="dau nang">KHÔNG CÓ</span><span class="noi"><b>Trần chi mỗi ngày</b><span class="phu">Chưa có gì chặn nếu tiền chạy quá tay. Với số đo ở trên, đặt <code>AI_NGAN_SACH_NGAY</code> bằng mức trần/ngày của model bạn chọn.</span></span></div>
+<div class="muc"><span class="dau canh">NHỚ KỸ</span><span class="noi"><b>Sửa cách AI trả lời ở đâu</b><span class="phu">Model chỉ đọc biến <code>LUAT</code> trong <code>ai_sale.py</code> (4,219 ký tự) cộng với kịch bản “Trả lời nhanh” của từng page trên Pancake. File <code>LUAT_AI_SALE.md</code> là sổ luật cho người đọc — sửa mình nó thì AI <b>không</b> đổi hành vi.</span></span></div>
+</div></section>
+<footer>
+<div>Số liệu đọc từ <code>state/&lt;thị trường&gt;/du_bao.jsonl</code> và <code>state/&lt;thị trường&gt;/so_chi_phi.jsonl</code>. Dựng lại trang: <code>python3 ai_sale.py dashboard</code>.</div>
+<div>Cập nhật 04/09/2026 17:07.</div>
+</footer>
+</div>
+</body></html>

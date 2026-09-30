@@ -1,0 +1,29 @@
+# ===== BÍ MẬT — tuyệt đối không đưa lên git =====
+# API key Pancake, key AI, token...
+.env
+.env.*
+!.env.example
+# Chứa API key Pancake POS (quyền admin) của từng thị trường.
+# Bản mẫu không có key: markets.example.json
+markets.json
+
+# ===== Dữ liệu lúc chạy =====
+# Hội thoại khách, token page (page_tokens.json), file khóa, nhật ký...
+state/
+
+# ===== File sao lưu tay (ai_sale.py.bak-..., .truoc-...) =====
+# Lịch sử sửa đổi giờ do git lưu, không cần giữ các bản này nữa.
+*.bak
+*.bak-*
+*.bak.*
+*.truoc-*
+*.truoc.*
+
+# ===== Thư viện Python cài sẵn =====
+# Cài lại: pip3 install --target libs -r requirements-libs.txt
+libs/
+
+# ===== Rác tự sinh =====
+__pycache__/
+*.pyc
+.DS_Store

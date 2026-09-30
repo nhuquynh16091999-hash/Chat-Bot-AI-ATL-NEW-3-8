@@ -1,0 +1,14 @@
+[Unit]
+Description=Pancake tu dong len don tu hoi thoai (tag Len don)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pancake-tool
+ExecStart=/usr/bin/python3 /opt/pancake-tool/auto_len_don.py daemon --giay 30
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

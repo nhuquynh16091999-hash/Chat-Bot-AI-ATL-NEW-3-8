@@ -1,0 +1,8 @@
+[Unit]
+Description=Gan the ten nuoc cho hoi thoai WhatsApp tren Pancake
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pancake-tool
+ExecStart=/usr/bin/python3 /opt/pancake-tool/the_nuoc_wa.py
+TimeoutStartSec=300

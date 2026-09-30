@@ -1,0 +1,263 @@
+{
+  "_ghi_chu": "Cấu hình các thị trường. bat=false để tạm tắt 1 thị trường. scale: hệ số tiền Pancake lưu (đã kiểm chứng bằng đơn thật: Nhật/Đài Loan=1, còn lại=100). sdt_them_0: chuẩn hóa SĐT thêm số 0 đầu. ma_tien_te: mã tiền tệ POS ghi trên đơn (order_currency) — chỉ khai khi KHÁC tien_te (Đài Loan hiển thị NT$ nhưng POS lưu TWD); LUẬT USER 2026-08-26: đơn landing nước nào phải mang tiền tệ nước đó (Webcake đổ đơn UAE/Saudi về mang sẵn CNY, tool phải sửa lại). | dvvc = đơn vị vận chuyển mặc định của thị trường; dvvc_dac_biet = đổi ĐVVC theo từ khóa tên sản phẩm; dvvc_theo_page = đổi ĐVVC theo PAGE (ưu tiên cao nhất; tu_khoa rỗng = mọi sản phẩm của page; chủ shop 24/09/2026: Madam Mystic Fengshui Expert TW đi BÌNH AN EXP thay NAZA); hop_id = mã hộp 008 kèm trang sức (null = thị trường không dùng hộp). | LUẬT SĐT (user chốt 2026-08-23): mặc định mọi thị trường CHẤP NHẬN số nước ngoài (hay gặp: số Philippines) miễn số đó có WhatsApp — tool lưu kèm mã nước '+63…' để bên vận chuyển liên hệ được. sdt_bat_buoc_ban_dia=true: thị trường CHỈ đi được bằng số bản địa (Kuwait chốt 2026-08-23, Bahrain chốt 2026-08-24) -> số ngoại thì để 'Mới' cho nhân viên gọi khách xin số. ghi_chu_sdt_ngoai: câu nhắc ghi thẳng vào đơn khi SĐT là số nước ngoài.",
+  "uae": {
+    "ten": "UAE",
+    "api_key": "",
+    "shop_id": "1635200759",
+    "country_code": 971,
+    "scale": 100,
+    "tien_te": "AED",
+    "tu_tien_te": "aed|dhs|dirhams?|درهم",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?971[\\s\\-.]?|0)?5(?:[\\s\\-.]?\\d){8}",
+    "sdt_them_0": true,
+    "bat": true,
+    "dvvc": {
+      "id": "6f43144a-168a-440e-866f-54d5cb56e33c",
+      "ten": "J&T UAE"
+    },
+    "hop_id": "41f9e649-1bd7-4888-8bd3-2940b29c8d1e",
+    "dung_hop": true
+  },
+  "saudi": {
+    "ten": "SAUDI",
+    "api_key": "",
+    "shop_id": "1328205216",
+    "country_code": 966,
+    "scale": 100,
+    "tien_te": "SAR",
+    "tu_tien_te": "sar|sr|riyals?|ريال",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?966[\\s\\-.]?|0)?5(?:[\\s\\-.]?\\d){8}",
+    "sdt_them_0": true,
+    "ghi_chu_sdt_ngoai": "⚠ SĐT KHÔNG PHẢI SỐ SAUDI — KHÔNG đẩy iMile của VPN (iMile bắt buộc số Saudi), phải cho đi hãng khác của VPN; liên hệ khách qua WhatsApp theo số này",
+    "bat": true,
+    "dvvc": {
+      "id": "0e5e6450-da04-4008-a904-021c0b3506c6",
+      "ten": "VPN"
+    },
+    "hop_id": "acef1e09-646e-4d1d-9cf0-173787c481b8",
+    "dung_hop": true
+  },
+  "kuwait": {
+    "ten": "KUWAIT",
+    "api_key": "",
+    "shop_id": "1328205226",
+    "country_code": 965,
+    "scale": 100,
+    "tien_te": "KWD",
+    "tu_tien_te": "kwd|kd|dinars?|دينار",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?965[\\s\\-.]?)?[24569]\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": false,
+    "sdt_bat_buoc_ban_dia": true,
+    "bat": true,
+    "dvvc": {
+      "id": "40c5832c-514c-4c66-ab73-a4e856b2f06d",
+      "ten": "POSTAL KWT"
+    },
+    "hop_id": "47c39a0c-5b23-4b3e-b02b-6014ea8fc80e",
+    "dung_hop": true,
+    "sdt_mo_ta": "8 chữ số, bắt đầu bằng 5, 6 hoặc 9"
+  },
+  "qatar": {
+    "ten": "QATAR",
+    "api_key": "",
+    "shop_id": "1021271617",
+    "country_code": 974,
+    "scale": 100,
+    "tien_te": "QAR",
+    "tu_tien_te": "qar|qr|riyals?|ريال",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?974[\\s\\-.]?)?[3567]\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": false,
+    "bat": true,
+    "dvvc": {
+      "id": "df033c01-edba-4b44-a77f-f3bdb7ae8460",
+      "ten": "IMILE QATAR"
+    },
+    "hop_id": null
+  },
+  "oman": {
+    "ten": "OMAN",
+    "api_key": "",
+    "shop_id": "1942200986",
+    "country_code": 968,
+    "scale": 100,
+    "tien_te": "OMR",
+    "tu_tien_te": "omr|rials?|ريال",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?968[\\s\\-.]?)?[79]\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": false,
+    "bat": true,
+    "dvvc": {
+      "id": "16128d4f-30a6-436e-a05c-ec8893b6f88a",
+      "ten": "asyad oman"
+    },
+    "hop_id": "aee87fe4-9366-405e-ad2a-004ebafe4a99",
+    "dung_hop": false
+  },
+  "bahrain": {
+    "ten": "BAHRAIN",
+    "api_key": "",
+    "shop_id": "100943483",
+    "country_code": 973,
+    "scale": 100,
+    "tien_te": "BHD",
+    "tu_tien_te": "bhd|bd|dinars?|دينار",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?973[\\s\\-.]?)?[36]\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": false,
+    "sdt_bat_buoc_ban_dia": true,
+    "bat": true,
+    "dvvc": {
+      "id": "bfa8bc99-c57a-4a17-b5aa-c24213afb27a",
+      "ten": "UBEX"
+    },
+    "hop_id": null,
+    "sdt_mo_ta": "8 chữ số, bắt đầu bằng 3 hoặc 6"
+  },
+  "taiwan": {
+    "ten": "ĐÀI LOAN",
+    "api_key": "",
+    "shop_id": "1328343252",
+    "country_code": 886,
+    "scale": 1,
+    "tien_te": "NT$",
+    "ma_tien_te": "TWD",
+    "tu_tien_te": "nt\\$|ntd|twd|元|塊",
+    "ky_hieu_truoc": "nt\\$",
+    "sdt_regex": "(?:\\+?886[\\s\\-.]?|0)?9\\d{2}[\\s\\-.]?\\d{3}[\\s\\-.]?\\d{3}",
+    "sdt_them_0": true,
+    "bat": true,
+    "dvvc": {
+      "id": "9f8527df-b7ed-48c8-b142-1245ba8ee99b",
+      "ten": "NAZA"
+    },
+    "hop_id": "d4667dd3-5d22-4c0c-82fa-a9639b214452",
+    "dung_hop": true,
+    "dvvc_theo_page": [
+      {
+        "page_id": "1161512757051326",
+        "ten_page": "Madam Mystic Fengshui Expert TW",
+        "id": "2d91f45d-b6de-4aba-9c5a-c84058acfcbe",
+        "ten": "BÌNH AN EXP",
+        "tu_khoa": [],
+        "ly_do": "Chủ shop 24/09/2026: hàng page này nằm kho Bình An → đi BÌNH AN EXP thay NAZA (8 đơn 11-24/09 sale đều đổi tay sau khi tool tạo)"
+      }
+    ]
+  },
+  "japan": {
+    "ten": "NHẬT BẢN",
+    "api_key": "",
+    "shop_id": "100293585",
+    "country_code": 81,
+    "scale": 1,
+    "tien_te": "JPY",
+    "tu_tien_te": "jpy|yen|円|¥",
+    "ky_hieu_truoc": "¥",
+    "sdt_regex": "(?:\\+?81[\\s\\-.]?|0)?[789]0[\\s\\-.]?\\d{4}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": true,
+    "bat": true,
+    "dvvc": {
+      "id": "20d45eee-d4a7-4cc2-982c-c62dba04c8a5",
+      "ten": "NAZA JP"
+    },
+    "hop_id": null
+  },
+  "usa": {
+    "ten": "MỸ",
+    "api_key": "",
+    "shop_id": "100197417",
+    "country_code": 1,
+    "scale": 100,
+    "tien_te": "USD",
+    "tu_tien_te": "usd|dollars?|bucks?",
+    "ky_hieu_truoc": "\\$",
+    "sdt_regex": "(?:\\+?1[\\s\\-.]?)?\\(?\\d{3}\\)?[\\s\\-.]?\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": false,
+    "bat": true,
+    "dvvc": {
+      "id": "649ae5aa-daf7-4f1f-9c0a-9981a6a86068",
+      "ten": "CJ US"
+    },
+    "hop_id": "db71941d-7789-4eab-bda4-0f4f7f81d5ac",
+    "dvvc_dac_biet": [
+      {
+        "tu_khoa": [
+          "golden buddha",
+          "131",
+          "birth stone",
+          "010",
+          "ginseng serum",
+          "071"
+        ],
+        "id": "73e016db-e6d2-4f05-a52b-171691c0af04",
+        "ten": "AMI US"
+      }
+    ],
+    "dung_hop": false
+  },
+  "spain": {
+    "ten": "TÂY BAN NHA",
+    "api_key": "",
+    "shop_id": "407949295",
+    "country_code": 34,
+    "scale": 100,
+    "tien_te": "EUR",
+    "tu_tien_te": "eur|euros?",
+    "ky_hieu_truoc": "€",
+    "sdt_regex": "(?:\\+?34[\\s\\-.]?)?[67]\\d{2}[\\s\\-.]?\\d{3}[\\s\\-.]?\\d{3}",
+    "sdt_them_0": false,
+    "bat": true,
+    "dvvc": {
+      "id": "eb2962dc-7a64-4849-8864-6cf3ce572d35",
+      "ten": "EU_SHIPMENTS"
+    },
+    "dvvc_dac_biet": [
+      {
+        "tu_khoa": [
+          "167",
+          "collana ivoria"
+        ],
+        "id": "fec1d8eb-a4c2-4920-8ecb-147da4154988",
+        "ten": "BEEPING"
+      }
+    ]
+  },
+  "romania": {
+    "ten": "ROMANIA",
+    "api_key": "",
+    "shop_id": "1635942497",
+    "country_code": 40,
+    "scale": 100,
+    "tien_te": "RON",
+    "tu_tien_te": "ron|lei",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?40[\\s\\-.]?|0)?7\\d{2}[\\s\\-.]?\\d{3}[\\s\\-.]?\\d{3}",
+    "sdt_them_0": true,
+    "bat": true,
+    "dvvc": {
+      "id": "42c17ad8-ac26-4073-bf68-789dd1020da7",
+      "ten": "eushipments"
+    }
+  },
+  "bulgaria": {
+    "ten": "BULGARIA",
+    "api_key": "",
+    "shop_id": "1329087706",
+    "country_code": 359,
+    "scale": 100,
+    "tien_te": "EUR",
+    "tu_tien_te": "euros?|eur|евро|лв|bgn",
+    "ky_hieu_truoc": "€",
+    "sdt_regex": "(?:\\+?359[\\s\\-.]?|0)?[89]\\d[\\s\\-.]?\\d{3}[\\s\\-.]?\\d{4}",
+    "sdt_them_0": true,
+    "lay_ma_buu_chinh": true,
+    "bat": true,
+    "dvvc": {
+      "id": "2c616694-abb0-495b-bb9b-96d77d559992",
+      "ten": "EU SHIPMENTS"
+    }
+  }
+}
