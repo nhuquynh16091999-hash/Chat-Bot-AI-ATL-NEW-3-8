@@ -1,0 +1,229 @@
+#!/usr/bin/python3.12
+# -*- coding: utf-8 -*-
+"""
+CÀI KEY CHO SHOP MỚI — AI Sale bản clone (server 139.180.131.21).
+
+Chủ shop chạy:   ssh -t root@139.180.131.21 cai-key-shop
+
+Dán NGUYÊN đoạn có 3 key (kể cả chữ, xuống dòng) — lệnh tự nhận ra:
+  · key Pancake POS  (32 ký tự 0-9a-f)
+  · user token Pancake (bắt đầu bằng eyJ...)
+  · key DeepSeek     (bắt đầu bằng sk-)
+Chữ dán vào KHÔNG hiện trên màn hình. Kiểm tra key thật với Pancake / DeepSeek
+rồi mới ghi vào /opt/pancake-tool/.env và markets.json (chỉ root đọc được).
+Key nào không dán thì giữ nguyên giá trị cũ. Chạy lại bao nhiêu lần cũng được.
+Không bật bot, không gửi gì cho khách — chỉ ghi cấu hình.
+"""
+import json
+import os
+import re
+import select
+import sys
+import termios
+import urllib.error
+import urllib.parse
+import urllib.request
+
+DIR = "/opt/pancake-tool"
+ENV = os.path.join(DIR, ".env")
+MK = os.path.join(DIR, "markets.json")
+
+RE_JWT = re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")
+RE_DS = re.compile(r"sk-[0-9a-f]{32}(?![0-9a-f])|sk-[A-Za-z0-9]{20,}")
+RE_POS = re.compile(r"(?<![A-Za-z0-9])[0-9a-fA-F]{32}(?![A-Za-z0-9])")
+TEN = {"pos": "key Pancake POS", "ut": "user token Pancake", "ds": "key DeepSeek"}
+
+
+def http_json(url, headers=None):
+    req = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read().decode("utf-8")), None
+    except urllib.error.HTTPError as e:
+        return None, f"lỗi HTTP {e.code}"
+    except Exception as e:  # mất mạng, hết giờ...
+        return None, str(e)[:100]
+
+
+def nhan_key(text, found):
+    """Tìm key trong một đoạn chữ bất kỳ. Trả về danh sách loại key mới nhận."""
+    moi = []
+    for loai, rx in (("ut", RE_JWT), ("ds", RE_DS)):  # bóc JWT, sk- trước để không lẫn sang POS
+        for m in rx.findall(text):
+            if loai not in found:
+                found[loai] = m
+                moi.append(loai)
+            text = text.replace(m, " ")
+    for m in RE_POS.findall(text):
+        if "pos" not in found:
+            found["pos"] = m.lower()
+            moi.append("pos")
+    return moi
+
+
+def doc_doan_dan():
+    """Đọc đoạn dán nhiều dòng, tắt hiện chữ. Dừng khi đủ 3 key, hoặc khi chủ shop xác nhận."""
+    fd = sys.stdin.fileno()
+    found = {}
+    cu = termios.tcgetattr(fd)
+    moi = termios.tcgetattr(fd)
+    moi[3] &= ~termios.ECHO
+    termios.tcsetattr(fd, termios.TCSADRAIN, moi)
+    da_nhac = False
+    try:
+        while len(found) < 3:
+            cho = None if (not found or da_nhac) else 4  # dán xong 4 giây không thêm gì → hỏi
+            r, _, _ = select.select([fd], [], [], cho)
+            if not r:
+                thieu = ", ".join(TEN[k] for k in ("pos", "ut", "ds") if k not in found)
+                print(f"   … Còn thiếu: {thieu}.")
+                print("     Dán tiếp, HOẶC nhấn Enter để chỉ lưu những key đã nhận.")
+                da_nhac = True
+                continue
+            data = os.read(fd, 65536)
+            if not data:
+                break
+            dong = data.decode("utf-8", "ignore").replace("\x1b[200~", "").replace("\x1b[201~", "")
+            moi_nhan = nhan_key(dong, found)
+            for k in moi_nhan:
+                print(f"   ✓ Đã nhận {TEN[k]} (…{found[k][-4:]})")
+            if not moi_nhan:
+                s = dong.strip().lower()
+                if (s == "" and da_nhac) or s in ("xong", "ok"):
+                    break
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, cu)
+    return found
+
+
+def ghi_file(path, noi_dung):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(noi_dung)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+
+
+def ghi_env(capnhat):
+    con = dict(capnhat)
+    out = []
+    for ln in open(ENV, encoding="utf-8").read().splitlines():
+        m = re.match(r"^([A-Z0-9_]+)=", ln)
+        if m and m.group(1) in con:
+            out.append(f"{m.group(1)}={con.pop(m.group(1))}")
+        else:
+            out.append(ln)
+    out += [f"{k}={v}" for k, v in con.items()]
+    ghi_file(ENV, "\n".join(out) + "\n")
+
+
+def thoat(msg):
+    print(f"\n✗ {msg}\n  Chưa ghi gì. Kiểm tra lại rồi chạy lại lệnh.\n")
+    sys.exit(1)
+
+
+def main():
+    mk = json.load(open(MK, encoding="utf-8"))
+    nuoc = [k for k, v in mk.items() if isinstance(v, dict) and "bat" in v]
+
+    print("\n=== CÀI KEY CHO SHOP MỚI — AI Sale ===\n")
+    print("BƯỚC 1. Dán NGUYÊN đoạn có 3 key vào đây (cả chữ lẫn key đều được), rồi nhấn Enter.")
+    print("        Chữ dán vào sẽ KHÔNG hiện lên — bình thường. Lệnh tự nhận ra từng key.\n")
+    found = doc_doan_dan()
+    if not found:
+        print("\nKhông thấy key nào — không ghi gì.\n")
+        return
+
+    print("\nĐang kiểm tra key với Pancake / DeepSeek…")
+    capnhat, bao, hong = {}, [], []
+
+    # 1) Pancake POS — để lên đơn
+    pos, shop, sid = found.get("pos"), None, None
+    if pos:
+        res, err = http_json("https://pos.pages.fm/api/v1/shops?" + urllib.parse.urlencode({"api_key": pos}))
+        shops = res if isinstance(res, list) else ((res or {}).get("shops") or (res or {}).get("data") or [])
+        if err or not shops:
+            print(f"   ✗ Key POS không dùng được ({err or 'không thấy shop nào'}) — bỏ qua key này")
+            hong.append("key Pancake POS")
+            pos = None
+        else:
+            if len(shops) == 1:
+                shop = shops[0]
+            else:
+                for i, s_ in enumerate(shops, 1):
+                    print(f"   {i}. {s_.get('name')} — {len(s_.get('pages') or [])} page")
+                chon = ""
+                while not (chon.isdigit() and 1 <= int(chon) <= len(shops)):
+                    chon = input("   Key này có nhiều shop. Dùng shop nào? Gõ số rồi Enter: ").strip()
+                shop = shops[int(chon) - 1]
+            sid = str(shop.get("id"))
+            print(f"   ✓ Key POS đúng — shop \"{shop.get('name')}\" (mã {sid}), {len(shop.get('pages') or [])} page nối với shop")
+            capnhat.update(PANCAKE_API_KEY=pos, PANCAKE_SHOP_ID=sid)
+            bao.append(f"POS: shop \"{shop.get('name')}\"")
+
+    # 2) User token Pancake — đọc hội thoại, kịch bản, sinh page token
+    ut = found.get("ut")
+    if ut:
+        res, err = http_json("https://pages.fm/api/v1/pages?" + urllib.parse.urlencode({"access_token": ut}))
+        if err or res is None or (isinstance(res, dict) and res.get("success") is False):
+            print(f"   ✗ User token không dùng được ({err or (res or {}).get('message') or 'bị từ chối'}) — bỏ qua")
+            hong.append("user token Pancake")
+        else:
+            pages = (res or {}).get("pages") or ((res or {}).get("categorized") or {}).get("activated") or []
+            print(f"   ✓ User token đúng — tài khoản thấy {len(pages)} page")
+            capnhat["PANCAKE_USER_TOKEN"] = ut
+            bao.append(f"Pancake: {len(pages)} page")
+
+    # 3) DeepSeek — AI soạn câu trả lời
+    ds = found.get("ds")
+    if ds:
+        res, err = http_json("https://api.deepseek.com/user/balance", {"Authorization": f"Bearer {ds}"})
+        if err or not res:
+            print(f"   ✗ Key DeepSeek không dùng được ({err}) — bỏ qua")
+            hong.append("key DeepSeek")
+        else:
+            so_du = ", ".join(f"{b.get('total_balance')} {b.get('currency')}" for b in (res.get("balance_infos") or [])) or "?"
+            print(f"   ✓ Key DeepSeek đúng — số dư {so_du}")
+            capnhat["DEEPSEEK_API_KEY"] = ds
+            bao.append(f"DeepSeek: số dư {so_du}")
+
+    if not capnhat:
+        thoat("Không có key nào dùng được.")
+
+    # Chọn nước — lấy từ lệnh (cai-key-shop vietnam) nếu có, không thì hỏi tới khi đúng
+    tt = sys.argv[1].strip().lower() if len(sys.argv) > 1 else ""
+    if tt in nuoc:
+        print(f"\nNước chạy thử: {mk[tt].get('ten', tt)}")
+    else:
+        print("\nBƯỚC 2. Chạy thử nước nào?")
+        for i, k in enumerate(nuoc, 1):
+            print(f"   {i:>2}. {k} ({mk[k].get('ten', k)})")
+    while tt not in nuoc:
+        tt = input("   Gõ số hoặc mã nước rồi Enter (ví dụ 1 hoặc uae): ").strip().lower()
+        if tt.isdigit() and 1 <= int(tt) <= len(nuoc):
+            tt = nuoc[int(tt) - 1]
+        if tt in nuoc:
+            break
+        print("   Chưa đúng, gõ lại nhé.")
+
+    ghi_env(capnhat)
+    m = mk[tt]
+    if pos:
+        m["api_key"], m["shop_id"] = pos, int(sid) if sid.isdigit() else sid
+    if m.get("api_key"):
+        m["bat"] = True
+    ghi_file(MK, json.dumps(mk, ensure_ascii=False, indent=2) + "\n")
+
+    print(f"\n✓ Đã lưu. Nước {m.get('ten', tt)}: {'BẬT' if m.get('bat') else 'chưa bật (thiếu key POS)'}")
+    for b in bao:
+        print(f"   · {b}")
+    if hong:
+        print(f"\n⚠ Chưa lưu: {', '.join(hong)} — copy lại đúng key đó rồi chạy lại lệnh, chỉ dán key đó thôi.")
+    print("\nBot CHƯA chạy. Nhắn Claude \"xong\" để bật chế độ thử (không gửi gì cho khách).\n")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nĐã huỷ, chưa ghi gì.\n")

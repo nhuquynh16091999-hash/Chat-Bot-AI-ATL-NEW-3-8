@@ -1,0 +1,19 @@
+[Unit]
+Description=AI Sale (ban clone) - do nhanh 8s, tra loi khach tren Pancake (vietnam)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pancake-tool
+# CHAY THU: do that, soan that, KHONG gui cho khach. Muon gui that: them --that vao cuoi dong duoi.
+ExecStart=/usr/bin/python3.12 -u /opt/pancake-tool/ai_sale.py theo_doi vietnam --giay 8 --cho 15
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/aisale-chat-vietnam.log
+StandardError=append:/var/log/aisale-chat-vietnam.log
+# Server chi 1GB RAM: chan tran de 1 bot khong keo sap ca du an Talpha tren cung may
+MemoryMax=700M
+
+[Install]
+WantedBy=multi-user.target

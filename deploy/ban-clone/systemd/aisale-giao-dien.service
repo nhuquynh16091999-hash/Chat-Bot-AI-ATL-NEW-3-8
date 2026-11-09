@@ -1,0 +1,14 @@
+[Unit]
+Description=AI Sale giao dien quan ly (ban clone) - chi nghe 127.0.0.1:8765
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pancake-tool
+ExecStart=/usr/bin/python3.12 -u /opt/pancake-tool/giao_dien.py vietnam --khong-mo
+Restart=always
+RestartSec=5
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target

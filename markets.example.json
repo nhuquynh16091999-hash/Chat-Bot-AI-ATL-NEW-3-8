@@ -259,5 +259,21 @@
       "id": "2c616694-abb0-495b-bb9b-96d77d559992",
       "ten": "EU SHIPMENTS"
     }
+  },
+  "vietnam": {
+    "ten": "VIỆT NAM",
+    "api_key": "",
+    "shop_id": "",
+    "country_code": 84,
+    "scale": 1,
+    "tien_te": "VND",
+    "tu_tien_te": "vnd|vnđ|đồng|đ|k|nghìn|ngàn|triệu|tr",
+    "ky_hieu_truoc": null,
+    "sdt_regex": "(?:\\+?84[\\s\\-.]?|0)?[35789](?:[\\s\\-.]?\\d){8}",
+    "sdt_them_0": true,
+    "bat": false,
+    "dvvc": null,
+    "hop_id": null,
+    "dung_hop": false
   }
 }
