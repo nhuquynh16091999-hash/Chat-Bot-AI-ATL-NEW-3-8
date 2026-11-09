@@ -13035,7 +13035,9 @@ def _so_tien(txt, chat=False, mkey=None):
         ra += [int(x.replace(",", "")) for x in re.findall(
             r"\b(\d[\d,]{1,6})\b(?![\s]*[%KkÂ°])"
             r"(?!\s*(?:patch|pcs?|piece|pack|box|boxes|bottle|jar|set|sachet|capsule|tablet"
-            r"|gram|g\b|kg|ml|day|month|week|year|time|bracelet|item|unit|miếng|cái|hộp|ngày)(?:es|s)?\b)",
+            r"|gram|g\b|kg|ml|day|month|week|year|time|bracelet|item|unit|miếng|cái|hộp|ngày"
+            # 09/11 (shop VIỆT NAM): "8 gói 99k · 12 gói 199k" — số gói/hạt/cây là SỐ LƯỢNG, bản cũ đọc 8/12/15/20 thành giá.
+            r"|gói|hạt|cây|chậu|tiếng|giờ|lá|màu|đơn|lần|tuần|tháng|năm|cm|chiếc|túi|bịch|combo)(?:es|s)?\b)",
             t, flags=re.I)]
         # 19/09 (ChunHo Golden Jewerly: "LAST FINAL 10 SLOTS with 50% SALE OFF : 199 SAR…" → mức giá 10, sàn 9 SAR):
         # số TRẦN nhỏ hơn 30% mức CÓ ký hiệu tiền thấp nhất trong cùng đoạn là số marketing (suất, năm, %), không phải giá.
@@ -15964,8 +15966,19 @@ def so_tien_kieu_viet(t):
     return _SO_KIEU_VIET.sub(lambda m: m.group(1) + m.group(2).replace(".", ","), t or "")
 
 
+# 09/11/2026 (bản clone, shop VIỆT NAM): thị trường mà tiếng Việt CHÍNH LÀ tiếng của khách. Bộ luật gốc viết
+# cho 12 nước ngoài nên coi chữ Việt là "lọt hướng dẫn nội bộ" (cổng chặn lot_tieng_viet) trừ khi khách tự
+# viết tiếng Việt rõ — đo 09/11: 3/3 câu AI soạn đúng giá cho khách Hanh Ngo đều bị chặn. Ở các thị trường
+# này mọi khách coi như "nhắn tiếng Việt" (VIET_2709): prompt dặn viết tiếng Việt, cổng không chặn chữ Việt.
+# Một tiến trình chỉ chạy một thị trường → cmd_theo_doi / cmd_chay ghi thị trường đang chạy vào _TT_DANG_CHAY.
+TT_TIENG_VIET = {"vietnam"}
+_TT_DANG_CHAY = {"mkey": None}
+
+
 def khach_noi_tieng_viet(msgs):
     """Tin khách có chữ gần nhất (xét tối đa 4 tin, bỏ qua tin cụt 1-2 chữ) là TIẾNG VIỆT rõ (điểm ≥ 4) → True."""
+    if _TT_DANG_CHAY["mkey"] in TT_TIENG_VIET:
+        return True
     n = 0
     for m in reversed(msgs or []):
         if m.get("boi") != "khach":
@@ -19020,6 +19033,9 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
     `ai_co_vao_cuoc`, vẫn dựng đúng gói prompt sẽ gửi — nhưng DỪNG NGAY TRƯỚC lượt gọi model
     và chỉ ghi lại cỡ gói. Đây là cách trả lời câu "nạp bao nhiêu thì đủ" trước khi nạp.
     """
+    global _CHAY_THU_TRA_CHUA_DOC
+    _CHAY_THU_TRA_CHUA_DOC = (not that) or du_bao      # 09/11: vòng thử trả lại "chưa đọc" cho sale
+    _TT_DANG_CHAY["mkey"] = mkey                       # 09/11: thị trường tiếng Việt (TT_TIENG_VIET)
     if du_bao:
         that = False
         chi_phi.xoa_du_bao(mkey)     # dự báo là ảnh chụp một lần quét, không cộng dồn
@@ -22664,6 +22680,7 @@ def cmd_theo_doi(mkey, giay=15, cho=CHO_BOTCAKE, so=12, gio=1, that=False):
     from concurrent.futures import ThreadPoolExecutor
     global _CHAY_THU_TRA_CHUA_DOC
     _CHAY_THU_TRA_CHUA_DOC = not that                  # 09/11: vòng thử trả lại "chưa đọc" cho sale
+    _TT_DANG_CHAY["mkey"] = mkey                       # 09/11: thị trường tiếng Việt (TT_TIENG_VIET)
     pages = _pages_cua_thi_truong(mkey)
     if not pages:
         sys.exit(f"❌ Không có page nào token sống ở {mkey}")

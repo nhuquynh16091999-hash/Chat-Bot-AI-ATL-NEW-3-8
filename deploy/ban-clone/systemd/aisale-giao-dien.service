@@ -5,6 +5,7 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/pancake-tool
+Environment=AI_TIEN_VND=1
 ExecStart=/usr/bin/python3.12 -u /opt/pancake-tool/giao_dien.py vietnam --khong-mo
 Restart=always
 RestartSec=5

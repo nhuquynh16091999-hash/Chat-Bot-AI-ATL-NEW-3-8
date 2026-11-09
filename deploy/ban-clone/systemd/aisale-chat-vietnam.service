@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/pancake-tool
+Environment=AI_TIEN_VND=1
 # CHAY THU: do that, soan that, KHONG gui cho khach. Muon gui that: them --that vao cuoi dong duoi.
 ExecStart=/usr/bin/python3.12 -u /opt/pancake-tool/ai_sale.py theo_doi vietnam --giay 8 --cho 15
 Restart=always

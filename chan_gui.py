@@ -547,6 +547,15 @@ MA_RIENG = {
     "usa": r"\$|USD|dollars?", "spain": r"€|EUR|euros?",
     "romania": r"RON|lei", "bulgaria": r"€|EUR|BGN|лв|euros?",
 }
+# 09/11/2026 (bản clone, shop VIỆT NAM): tiền Việt viết "99k", "149.000đ", "199.000 VND", "99 nghìn".
+# Đơn vị đọc khớp nhau: "99k" → 99 · "99.000đ" → _so("99.000") = 99 — cùng tính bằng NGHÌN đồng.
+# Chữ "k" CHỈ bật cho tiến trình chạy thị trường Việt Nam (service đặt AI_TIEN_VND=1): ở page trang sức
+# nước ngoài "18k" là tuổi vàng — bật chung thì "18k gold" thành giá 18 (đo 09/11: tự gắn page theo tiền
+# tệ gắn sai 6 page trang sức vào Việt Nam vì đúng chữ "k" này). Không bật thì 12 nước cũ y như trước.
+MA_VND = r"(?<![a-z])k(?![a-zà-ỹđ])|vnđ|vnd|(?<![a-zà-ỹđ])đ(?![a-zà-ỹđ])|đồng|nghìn|ngàn"
+MA_RIENG["vietnam"] = MA_VND
+if os.environ.get("AI_TIEN_VND") == "1":
+    _MA_TIEN = _MA_TIEN + "|" + MA_VND
 
 
 def so_tien_cua(t, mkey):
