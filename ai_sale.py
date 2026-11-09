@@ -9152,6 +9152,25 @@ _LUC_MO_USER = {}
 _TIN_DA_TOI = {}
 
 
+# 09/11/2026 (bản clone, shop VIỆT NAM): CHẠY THỬ mà đọc bằng TÀI KHOẢN Pancake thì Pancake lật hội thoại
+# thành "đã xem" → chấm đỏ của sale biến mất, mà vòng thử không đánh dấu lại (danh_dau_da_xem chỉ chạy ở
+# vòng thật) → khách bị bỏ sót. Vòng thử nay tự trả "chưa đọc" sau mỗi lượt đọc bằng tài khoản
+# (ngay + sau 10s vì Pancake ghi "đã xem" chậm — xem _canh_echo_muon). mark_unread giữ nguyên updated_at.
+_CHAY_THU_TRA_CHUA_DOC = False
+
+
+def _tra_chua_doc_chay_thu(page_id, conv_id):
+    def _lam():
+        for cho_ in (2, 10):
+            time.sleep(cho_)
+            try:
+                _post(f"{WEB_API}/pages/{page_id}/conversations/{conv_id}/mark_unread",
+                      {"access_token": _tok_user()})
+            except Exception:                            # noqa: BLE001
+                pass
+    _threading.Thread(target=_lam, name=f"thu_chua_doc_{conv_id}", daemon=True).start()
+
+
 def _lay_tin_raw(page_id, conv_id, token):
     """Gói tin của một hội thoại: Public API bằng token page, hoặc API nội bộ bằng tài khoản."""
     if _la_user(token):
@@ -9159,9 +9178,12 @@ def _lay_tin_raw(page_id, conv_id, token):
         if not cu:
             return None, "không tìm được customer_id của hội thoại (API nội bộ cần)"
         _LUC_MO_USER[str(conv_id)] = time.time()          # ghi TRƯỚC lệnh: đọc hỏng 500 vẫn có thể lật cờ
-        return _get(f"{WEB_API}/pages/{page_id}/conversations/{conv_id}/messages",
+        _kq_ = _get(f"{WEB_API}/pages/{page_id}/conversations/{conv_id}/messages",
                     {"access_token": _tok_user(), "customer_id": cu,
                      "user_view": "true", "is_new_api": "true"})
+        if _CHAY_THU_TRA_CHUA_DOC:
+            _tra_chua_doc_chay_thu(page_id, conv_id)
+        return _kq_
     return _get(f"{BASE_V1}/pages/{page_id}/conversations/{conv_id}/messages",
                 {"page_access_token": token})
 
@@ -22640,6 +22662,8 @@ def cmd_theo_doi(mkey, giay=15, cho=CHO_BOTCAKE, so=12, gio=1, that=False):
     khác là thôi. Lượt đầu chỉ ghi nhớ hiện trạng, không xử — khỏi cày lại lịch sử cũ.
     """
     from concurrent.futures import ThreadPoolExecutor
+    global _CHAY_THU_TRA_CHUA_DOC
+    _CHAY_THU_TRA_CHUA_DOC = not that                  # 09/11: vòng thử trả lại "chưa đọc" cho sale
     pages = _pages_cua_thi_truong(mkey)
     if not pages:
         sys.exit(f"❌ Không có page nào token sống ở {mkey}")
