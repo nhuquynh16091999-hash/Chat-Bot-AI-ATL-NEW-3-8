@@ -31,3 +31,6 @@ ssh root@139.180.131.21 'tail -f /var/log/aisale-chat-vietnam.log'
   - `AI_NHUONG_SALE_PHUT=30`: sale nhắn khách trong 30 phút gần nhất thì AI tránh hội thoại đó.
   - `AI_LEN_DON=0`: AI chốt với khách nhưng không tự tạo đơn POS. Câu chốt vẫn gửi, ghi chú dặn sale lên đơn.
 - `aisale-bat-gui-that.timer`: hẹn giờ bật gửi thật (thêm `--that`).
+- 12/11: trang quản lý đổi giao diện theo app ANTALO (màu logo, Plus Jakarta Sans, thanh bên có nhóm + biểu tượng,
+  thanh trên báo bot GỬI THẬT / CHẠY THỬ, nền sáng/tối, ngăn kéo trên điện thoại). Logo: chép tay
+  `/opt/talpha/dashboard-ui/public/antalo-mark.png` → `/opt/pancake-tool/static/antalo-mark.png` (thư mục static/ không lên git).

@@ -77,6 +77,28 @@ def ghi_env(thay):
 
 # ───────────────────────── Dữ liệu cho giao diện ─────────────────────────
 
+def trang_thai_bot(mkey):
+    """Bot nước này GỬI THẬT hay CHẠY THỬ, service có chạy không — đọc thẳng file service (12/11/2026).
+
+    Chủ shop cần nhìn một phát là biết bot có đang nhắn khách thật không; trước đây chỉ biết bằng SSH."""
+    import subprocess
+    if not mkey:
+        return {}
+    unit = "aisale-chat" if mkey == "uae" else f"aisale-chat-{mkey}"
+    that = None
+    try:
+        with open(f"/etc/systemd/system/{unit}.service", encoding="utf-8") as f:
+            that = any(ln.startswith("ExecStart=") and ln.rstrip().endswith("--that") for ln in f)
+    except Exception:                                    # noqa: BLE001
+        pass
+    try:
+        chay = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True,
+                              timeout=3).stdout.strip()
+    except Exception:                                    # noqa: BLE001
+        chay = ""
+    return {"unit": unit, "that": that, "chay": chay}
+
+
 def du_lieu(mkey):
     import ai_sale as A
     import quet_hoi_thoai as q
@@ -104,6 +126,7 @@ def du_lieu(mkey):
         "nap_ds": chi_phi.doc_nap()[-12:],
         "luat": A.tai_luat(),
         "luat_goc": A.LUAT_DU_PHONG,
+        "bot": trang_thai_bot(mkey),
     }
 
 
@@ -210,236 +233,332 @@ TRANG = r"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI Sale — Bảng điều khiển</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="icon" href="/logo.png">
+<meta name="theme-color" content="#FFFFEF">
 <style>
+/* ═══ Giao diện theo app ANTALO (12/11/2026) ═══════════════════════════════════════════
+   Màu lấy từ logo ANTALO (giống dashboard-ui/tailwind.config.ts của app Antalo):
+     đỏ #FF3131 · xanh lá #00BF63 · cam #FF7312 · nền kem #FFFFEF · đen ấm #221F1B
+   Tên biến giữ nguyên như bản cũ (--nen, --mat, --nhan…) để mọi màn đang dùng tự đổi màu:
+     --nhan = TỐT (xanh lá) · --canh = CHÚ Ý (cam) · --nang = NẶNG (đỏ).
+   Chữ xanh/cam/đỏ dùng bậc đậm (700) cho đủ tương phản trên nền trắng; mảng màu (thanh,
+   chấm, cột) dùng đúng màu logo (--xanh, --cam, --do). */
 :root{
-  --nen:#F6F7F4; --mat:#FFFFFF; --muc:#161A15; --nhat:#6C7268; --vien:#E2E5DD;
-  --nhan:#1E6F4C; --nhan-mo:#E7F1EA; --canh:#A9701A; --canh-mo:#FAF0DE;
-  --nang:#A33528; --nang-mo:#FBEBE8; --canh-ben:#EEF0EB;
+  --nen:#FFFFEF; --mat:#FFFFFF; --muc:#221F1B; --nhat:#6E6A5E; --vien:#EBE9E0; --mo:#F6F5EE;
+  --nhan:#008545; --nhan-mo:#E8FCF3; --nhan-vien:#97F7C8;
+  --canh:#AE5313; --canh-mo:#FFF3EB; --canh-vien:#FDCCAA;
+  --nang:#C01B1B; --nang-mo:#FFF0F0; --nang-vien:#FDC3C3;
+  --canh-ben:#FFFFFF; --chon:#FFF3EB; --luot:#FAF9F4;
+  --xanh:#00BF63; --cam:#FF7312; --do:#FF3131;
+  --grad:linear-gradient(135deg,#FF3131,#FF7312);
+  --bong:0 1px 2px rgba(34,31,27,.06),0 1px 3px rgba(34,31,27,.04);
+  --bong-to:0 4px 14px rgba(34,31,27,.08);
+  color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --nen:#101310; --mat:#191C18; --muc:#E8ECE4; --nhat:#98A092; --vien:#282C26;
-  --nhan:#5CBF8C; --nhan-mo:#16281F; --canh:#D6A24A; --canh-mo:#2A2213;
-  --nang:#E0736A; --nang-mo:#2C1917; --canh-ben:#141712;
+  --nen:#131210; --mat:#1B1A17; --muc:#F6F5EE; --nhat:#A8A491; --vien:#2E2C27; --mo:#24221E;
+  --nhan:#3BDB8E; --nhan-mo:#11261B; --nhan-vien:#1F5A3B;
+  --canh:#FFA060; --canh-mo:#2A1D12; --canh-vien:#5C3A1E;
+  --nang:#FF7070; --nang-mo:#2C1716; --nang-vien:#5E2523;
+  --canh-ben:#131210; --chon:#2A1D12; --luot:#211F1B;
+  --xanh:#00D670; --cam:#FF9042; --do:#FF5252;
+  --grad:linear-gradient(135deg,#FF5252,#FF9042);
+  --bong:none; --bong-to:0 4px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --nen:#101310; --mat:#191C18; --muc:#E8ECE4; --nhat:#98A092; --vien:#282C26;
-  --nhan:#5CBF8C; --nhan-mo:#16281F; --canh:#D6A24A; --canh-mo:#2A2213;
-  --nang:#E0736A; --nang-mo:#2C1917; --canh-ben:#141712;
+  --nen:#131210; --mat:#1B1A17; --muc:#F6F5EE; --nhat:#A8A491; --vien:#2E2C27; --mo:#24221E;
+  --nhan:#3BDB8E; --nhan-mo:#11261B; --nhan-vien:#1F5A3B;
+  --canh:#FFA060; --canh-mo:#2A1D12; --canh-vien:#5C3A1E;
+  --nang:#FF7070; --nang-mo:#2C1716; --nang-vien:#5E2523;
+  --canh-ben:#131210; --chon:#2A1D12; --luot:#211F1B;
+  --xanh:#00D670; --cam:#FF9042; --do:#FF5252;
+  --grad:linear-gradient(135deg,#FF5252,#FF9042);
+  --bong:none; --bong-to:0 4px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--nen);color:var(--muc);font-size:15px;line-height:1.6;
-  font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
-  -webkit-font-smoothing:antialiased}
-.so{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-variant-numeric:tabular-nums}
+body{margin:0;background:var(--nen);color:var(--muc);font-size:14.5px;line-height:1.6;
+  font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;font-feature-settings:"calt" 1}
+.so{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
 
-/* Khung ứng dụng */
-#app{display:grid;grid-template-columns:236px 1fr;min-height:100%}
-aside{background:var(--canh-ben);border-right:1px solid var(--vien);padding:22px 14px;
-  display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
-.hieu{padding:0 10px;display:flex;flex-direction:column;gap:1px}
-.hieu b{font-size:16px;font-weight:800;letter-spacing:-.01em}
-.hieu span{font-size:12px;color:var(--nhat)}
-nav{display:flex;flex-direction:column;gap:2px}
-nav button{all:unset;cursor:pointer;padding:9px 11px;border-radius:4px;font-size:14px;
-  font-weight:600;color:var(--nhat);display:flex;justify-content:space-between;gap:8px}
-nav button:hover{background:var(--mat);color:var(--muc)}
-nav button[aria-current="page"]{background:var(--mat);color:var(--muc);
-  box-shadow:inset 2px 0 0 var(--nhan)}
-nav button .cham{width:7px;height:7px;border-radius:50%;background:var(--canh);
-  align-self:center;flex:0 0 auto}
-.trangthai{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:0 10px;
-  font-size:12.5px;color:var(--nhat)}
-.trangthai div{display:flex;justify-content:space-between;gap:8px}
-.trangthai b{color:var(--muc);font-weight:600}
+/* ── Khung ứng dụng: thanh bên trắng + cột nội dung (thanh trên dính + nội dung) ── */
+#app{display:grid;grid-template-columns:256px minmax(0,1fr);min-height:100%}
+aside{background:var(--canh-ben);border-right:1px solid var(--vien);box-shadow:var(--bong);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:20}
+.hieu{padding:16px;border-bottom:1px solid var(--vien);display:flex;flex-direction:column;gap:10px}
+.logo{display:flex;align-items:center;gap:11px;background:#FFFFEF;border:1px solid var(--vien);
+  border-radius:12px;padding:9px 11px}
+.logo img{width:34px;height:34px;object-fit:contain;flex:0 0 auto}
+.logo b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.01em;color:#221F1B;line-height:1.2}
+.logo small{display:block;font-size:11px;font-weight:600;color:#8A8675;letter-spacing:.02em}
+#pv{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--nhat)}
+#pv select{font:inherit;font-size:12.5px;font-weight:600;color:var(--muc);background:var(--mo);
+  border:1px solid var(--vien);border-radius:8px;padding:4px 8px;max-width:150px}
+nav{flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:2px}
+nav .nhom{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--nhat);padding:12px 12px 5px;opacity:.85}
+nav .nhom:first-child{padding-top:2px}
+nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:11px;
+  width:100%;padding:9px 12px;border-radius:10px;border:1px solid transparent;font-size:14px;
+  font-weight:600;color:var(--nhat);transition:background .15s,color .15s}
+nav button .ic{width:20px;text-align:center;font-size:15px;flex:0 0 auto}
+nav button .ten{flex:1 1 auto}
+nav button:hover{background:var(--luot);color:var(--muc)}
+nav button[aria-current="page"]{background:linear-gradient(90deg,var(--canh-mo),var(--nang-mo));
+  border-color:var(--canh-vien);color:var(--canh);box-shadow:var(--bong)}
+nav button:focus-visible{outline:2px solid var(--cam);outline-offset:1px}
+nav button .cham{width:7px;height:7px;border-radius:50%;background:var(--cam);flex:0 0 auto}
+.trangthai{border-top:1px solid var(--vien);padding:12px}
+.trangthai .hop-tt{background:var(--mo);border-radius:10px;padding:10px 12px;display:flex;
+  flex-direction:column;gap:5px;font-size:12px;color:var(--nhat)}
+.trangthai .hop-tt div{display:flex;justify-content:space-between;gap:8px}
+.trangthai b{color:var(--muc);font-weight:700}
 
-main{padding:30px 34px 70px;max-width:1000px}
+.cot{min-width:0;display:flex;flex-direction:column}
+header#dau{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;min-height:60px;
+  padding:10px 28px;background:color-mix(in srgb,var(--mat) 82%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--vien);
+  box-shadow:var(--bong)}
+#mo_menu{display:none}
+.vet{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;color:var(--nhat)}
+.vet b{font-size:17px;font-weight:700;color:var(--muc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vet .ic{font-size:18px}
+header .phai{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:5px 12px;
+  border-radius:999px;border:1px solid var(--vien);background:var(--mat);white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--nhat);flex:0 0 auto}
+.pill.that{background:var(--nhan-mo);border-color:var(--nhan-vien);color:var(--nhan)}
+.pill.that i{background:var(--xanh);box-shadow:0 0 0 3px color-mix(in srgb,var(--xanh) 25%,transparent);
+  animation:nhip 2s ease-in-out infinite}
+.pill.thu{background:var(--canh-mo);border-color:var(--canh-vien);color:var(--canh)}
+.pill.thu i{background:var(--cam)}
+.pill.tat{background:var(--nang-mo);border-color:var(--nang-vien);color:var(--nang)}
+.pill.tat i{background:var(--do)}
+@keyframes nhip{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--xanh) 0%,transparent)}}
+.nut-tron{all:unset;cursor:pointer;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  border:1px solid var(--vien);background:var(--mat);font-size:15px}
+.nut-tron:hover{background:var(--luot)}
+.nut-tron:focus-visible{outline:2px solid var(--cam);outline-offset:1px}
+
+main{padding:26px 28px 70px;max-width:1240px;width:100%}
 /* Tổng quan (báo cáo cho sếp) mở hết chiều rộng — chủ shop 13/09: "không muốn phải kéo sang" */
-main.rong{max-width:none;padding-right:40px}
-main.rong th,main.rong td{padding:8px 10px;font-size:13.5px}
+main.rong{max-width:none}
+main.rong th,main.rong td{padding:9px 11px;font-size:13.5px}
 main.rong td:first-child{white-space:normal;min-width:180px}
 main.rong .cuon table{width:100%}
-.dau-trang{display:flex;flex-direction:column;gap:5px;margin-bottom:26px}
-h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
-h2{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--nhat);margin:0 0 13px}
-p{margin:0}.phu{color:var(--nhat);font-size:14px}
-section{margin-bottom:30px}
-a{color:var(--nhan)}
+.dau-trang{display:flex;flex-direction:column;gap:6px;margin-bottom:22px}
+h1{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.25;text-wrap:balance}
+h2{font-size:16px;font-weight:700;letter-spacing:-.005em;color:var(--muc);margin:0 0 12px;
+  display:flex;align-items:center;gap:8px}
+h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--grad);flex:0 0 auto}
+p{margin:0}.phu{color:var(--nhat);font-size:13.5px}
+section{margin-bottom:28px}
+a{color:var(--canh);font-weight:600}
 
-.the-lon{background:var(--mat);border:1px solid var(--vien);border-left:3px solid var(--nhan);
-  border-radius:4px;padding:24px;display:flex;flex-direction:column;gap:18px}
+/* ── Thẻ & lưới số (kiểu ô KPI của Antalo) ── */
+.the-lon{background:var(--mat);border:1px solid var(--vien);border-radius:14px;padding:22px 24px;
+  box-shadow:var(--bong);display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden}
+.the-lon::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--grad)}
 .doi{display:flex;flex-wrap:wrap;gap:26px}
 .o{flex:1 1 190px;display:flex;flex-direction:column;gap:2px}
-.nhan-o{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--nhat);
-  font-weight:700}
-.to{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.nhan-o{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--nhat);font-weight:700}
+.to{font-size:28px;font-weight:800;letter-spacing:-.025em;line-height:1.15;font-variant-numeric:tabular-nums}
 .to.xanh{color:var(--nhan)}
 .ghi{font-size:12.5px;color:var(--nhat)}
 
-.luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:1px;
-  background:var(--vien);border:1px solid var(--vien);border-radius:4px;overflow:hidden}
-.the{background:var(--mat);padding:16px 17px;display:flex;flex-direction:column;gap:3px}
-.the .so-to{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px}
+.the{background:var(--mat);border:1px solid var(--vien);border-radius:12px;padding:14px 17px;
+  box-shadow:var(--bong);display:flex;flex-direction:column;gap:3px;transition:box-shadow .15s}
+.the:hover{box-shadow:var(--bong-to)}
+.the .so-to{font-size:24px;font-weight:800;letter-spacing:-.025em;line-height:1.2;font-variant-numeric:tabular-nums}
 
-.cuon{overflow-x:auto;border:1px solid var(--vien);border-radius:4px;background:var(--mat)}
-/* Bảng nhiều cột (bảng page ở Hiệu suất) được phép tràn khỏi cột đọc 1000px của <main>
-   để khỏi phải kéo ngang: max-content = rộng vừa đúng bảng cần, min-width 100% = không bao
-   giờ hẹp hơn trước, max-width = phần màn còn trống (236px thanh bên + 68px đệm + chỗ cho
-   thanh cuộn dọc). Màn hẹp hơn bảng thì vẫn cuộn trong khung như cũ. */
+/* ── Bảng ── */
+.cuon{overflow-x:auto;border:1px solid var(--vien);border-radius:12px;background:var(--mat);box-shadow:var(--bong)}
+/* Bảng nhiều cột được phép tràn khỏi cột đọc để khỏi phải kéo ngang (xem ghi chú bản cũ). */
 .cuon.rong{width:max-content;min-width:100%;max-width:calc(100vw - 320px)}
 .cuon.rong th,.cuon.rong td{padding-left:11px;padding-right:11px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:right;padding:10px 15px;border-bottom:1px solid var(--vien);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:10px 14px;border-bottom:1px solid var(--vien);white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
-thead th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--nhat);
-  font-weight:700;background:var(--nen)}
+thead th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--nhat);
+  font-weight:700;background:var(--mo);position:sticky;top:0}
 tbody tr:last-child td{border-bottom:none}
-tr.chon td{background:var(--nhan-mo);font-weight:600}
-.chip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-left:8px;
+tbody tr:hover td{background:var(--luot)}
+tr.chon td{background:var(--chon);font-weight:600}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-left:8px;
   background:var(--nhan-mo);color:var(--nhan)}
 
-/* Form */
-.hop{background:var(--mat);border:1px solid var(--vien);border-radius:4px;padding:22px}
+/* ── Form ── */
+.hop{background:var(--mat);border:1px solid var(--vien);border-radius:14px;padding:22px;box-shadow:var(--bong)}
 .hang{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:17px}
 label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
 label .gt{font-weight:400;color:var(--nhat);font-size:12.5px}
-input,select,textarea{font-family:inherit;font-size:14px;color:var(--muc);background:var(--nen);
-  border:1px solid var(--vien);border-radius:3px;padding:8px 10px;width:100%}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--muc);background:var(--mat);
+  border:1px solid var(--vien);border-radius:10px;padding:8px 11px;width:100%}
 input[type=number],input[type=text],input[type=password],textarea{
-  font-family:"IBM Plex Mono",ui-monospace,monospace}
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13.5px}
 textarea{line-height:1.65;resize:vertical;min-height:420px;font-size:13px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{
-  outline:2px solid var(--nhan);outline-offset:1px}
-.nut{font-family:inherit;font-size:14px;font-weight:700;color:var(--mat);background:var(--nhan);
-  border:1px solid var(--nhan);border-radius:3px;padding:9px 17px;cursor:pointer}
-.nut.vien{background:transparent;color:var(--nhan)}
-.nut.nhe{background:transparent;color:var(--nhat);border-color:var(--vien)}
-.nut:disabled{opacity:.45;cursor:default}
+  outline:2px solid var(--cam);outline-offset:1px}
+.nut{font-family:inherit;font-size:14px;font-weight:700;color:#fff;background:var(--grad);
+  border:1px solid transparent;border-radius:10px;padding:9px 18px;cursor:pointer;box-shadow:var(--bong);
+  transition:filter .15s,box-shadow .15s}
+.nut:hover{filter:brightness(1.05);box-shadow:var(--bong-to)}
+.nut.vien{background:var(--mat);color:var(--muc);border-color:var(--vien)}
+.nut.nhe{background:transparent;color:var(--nhat);border-color:var(--vien);box-shadow:none}
+.nut:disabled{opacity:.45;cursor:default;filter:none}
 .thanh-nut{display:flex;gap:10px;align-items:center;margin-top:19px;flex-wrap:wrap}
-.canh-bao{background:var(--canh-mo);color:var(--canh);border:1px solid var(--canh);
-  border-radius:4px;padding:11px 15px;font-size:13.5px;font-weight:600}
-.tot{background:var(--nhan-mo);color:var(--nhan);border:1px solid var(--nhan);
-  border-radius:4px;padding:11px 15px;font-size:13.5px;font-weight:600}
-.xau{background:var(--nang-mo);color:var(--nang);border:1px solid var(--nang);
-  border-radius:4px;padding:11px 15px;font-size:13.5px;font-weight:600}
-.trong{background:var(--mat);border:1px dashed var(--vien);border-radius:4px;padding:22px;
+
+/* ── Hộp thông báo ── */
+.canh-bao,.tot,.xau{border-radius:12px;padding:12px 16px;font-size:13.5px;font-weight:600;border:1px solid}
+.canh-bao{background:var(--canh-mo);color:var(--canh);border-color:var(--canh-vien)}
+.tot{background:var(--nhan-mo);color:var(--nhan);border-color:var(--nhan-vien)}
+.xau{background:var(--nang-mo);color:var(--nang);border-color:var(--nang-vien)}
+.trong{background:var(--mat);border:1px dashed var(--vien);border-radius:12px;padding:22px;
   color:var(--nhat);font-size:14px;text-align:center}
-code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;background:var(--nen);
-  border:1px solid var(--vien);border-radius:3px;padding:1px 5px}
-pre.log{background:var(--mat);border:1px solid var(--vien);border-radius:4px;padding:15px;
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;background:var(--mo);
+  border:1px solid var(--vien);border-radius:6px;padding:1px 6px}
+pre.log{background:var(--mat);border:1px solid var(--vien);border-radius:12px;padding:15px;
   font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;line-height:1.55;
   max-height:400px;overflow:auto;white-space:pre-wrap;margin:0}
 
 /* Bậc sẵn sàng — màu mã hoá mức nghiêm trọng, không phải trang trí */
 .bac{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
-  letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:3px;
-  white-space:nowrap}
-.bac0{background:var(--nang-mo);color:var(--nang);box-shadow:inset 0 0 0 1px var(--nang)}
+  letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.bac0{background:var(--nang-mo);color:var(--nang);box-shadow:inset 0 0 0 1px var(--nang-vien)}
 .bac1{background:var(--nang-mo);color:var(--nang)}
 .bac2{background:var(--canh-mo);color:var(--canh)}
 .bac3{background:var(--canh-mo);color:var(--canh);opacity:.85}
 .bac4{background:var(--nhan-mo);color:var(--nhan)}
 tbody tr.bam{cursor:pointer}
-tbody tr.bam:hover td{background:var(--nhan-mo)}
+tbody tr.bam:hover td{background:var(--chon)}
 td.trai,th.trai{text-align:left}
-.loc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.loc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .loc button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--nhat);
-  padding:5px 11px;border-radius:3px;border:1px solid var(--vien);background:var(--mat)}
-.loc button[aria-pressed="true"]{background:var(--muc);color:var(--nen);border-color:var(--muc)}
-.mau{border:1px solid var(--vien);border-radius:4px;background:var(--mat);padding:14px 16px;
-  margin-bottom:9px}
-.mau .tk{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--nhan)}
-.mau .noi{font-size:13.5px;white-space:pre-wrap;margin-top:7px;color:var(--muc);
-  max-height:190px;overflow:auto}
+  padding:6px 13px;border-radius:999px;border:1px solid var(--vien);background:var(--mat);transition:background .15s}
+.loc button:hover{background:var(--luot);color:var(--muc)}
+.loc button[aria-pressed="true"]{background:linear-gradient(90deg,var(--canh-mo),var(--nang-mo));
+  color:var(--canh);border-color:var(--canh-vien)}
+.loc button:focus-visible{outline:2px solid var(--cam);outline-offset:1px}
+.mau{border:1px solid var(--vien);border-radius:12px;background:var(--mat);padding:14px 16px;
+  margin-bottom:10px;box-shadow:var(--bong)}
+.mau .tk{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--canh)}
+.mau .noi{font-size:13.5px;white-space:pre-wrap;margin-top:7px;color:var(--muc);max-height:190px;overflow:auto}
 .mau .meta{font-size:11.5px;color:var(--nhat);margin-top:6px}
 .sos{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.sos span{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--nen);
-  border:1px solid var(--vien);border-radius:3px;padding:1px 7px}
-.viec{border:1px solid var(--vien);border-left:3px solid var(--canh);border-radius:4px;
-  background:var(--mat);padding:14px 16px;margin-bottom:9px}
-.viec.chan{border-left-color:var(--nang)}
-.viec .dinh{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  font-size:13px;font-weight:700}
+.sos span{font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;background:var(--mo);
+  border:1px solid var(--vien);border-radius:999px;padding:1px 9px}
+.viec{border:1px solid var(--vien);border-left:4px solid var(--cam);border-radius:12px;
+  background:var(--mat);padding:14px 16px;margin-bottom:10px;box-shadow:var(--bong)}
+.viec.chan{border-left-color:var(--do)}
+.viec .dinh{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:700}
 .viec .gcv{font-size:13px;color:var(--nhat);margin-top:6px;white-space:pre-wrap}
-.viec .cau{font-size:13px;margin-top:6px;padding:8px 11px;background:var(--nen);
-  border-radius:3px;border:1px solid var(--vien)}
+.viec .cau{font-size:13px;margin-top:6px;padding:9px 12px;background:var(--mo);border-radius:10px;border:1px solid var(--vien)}
 
-/* Toàn cảnh các nước — main.toan co lại được, bảng rộng cuộn trong khung chứ không đẩy cả trang */
+/* Toàn cảnh — main.toan co lại được, bảng rộng cuộn trong khung chứ không đẩy cả trang */
 main.toan{min-width:0}
-main.toan .luoi{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))}
+main.toan .luoi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
 main.toan td .ghi{white-space:nowrap}
-main.toan th,main.toan td{padding-left:8px;padding-right:8px}
-.hai-dong{display:block;font-size:11.5px;color:var(--nhat);font-weight:400}
+main.toan th,main.toan td{padding-left:9px;padding-right:9px}
+.hai-dong{display:block;font-size:11.5px;color:var(--nhat);font-weight:500}
 .tc-dong{cursor:pointer}
-.tc-dong:hover td{background:var(--nhan-mo)}
+.tc-dong:hover td{background:var(--chon)}
 .den{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
-.den.chay{background:var(--nhan)}.den.tat{background:var(--nang)}.den.cham{background:var(--canh)}
+.den.chay{background:var(--xanh)}.den.tat{background:var(--do)}.den.cham{background:var(--cam)}
 .kc{display:flex;gap:2px;height:10px;width:120px;min-width:120px}
-.kc i{display:block;height:100%;border-radius:2px;min-width:2px}
-.kc .g{background:var(--nhan)}.kc .n{background:var(--canh)}.kc .t{background:var(--nhat)}.kc .c{background:var(--nang)}
+.kc i{display:block;height:100%;border-radius:3px;min-width:2px}
+.kc .g{background:var(--xanh)}.kc .n{background:var(--cam)}.kc .t{background:var(--nhat)}.kc .c{background:var(--do)}
 .chu-giai{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--nhat);margin-top:9px}
-.chu-giai span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;
+.chu-giai span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;
   margin-right:6px;vertical-align:-1px;background:var(--mau)}
 .sparks{display:block;width:120px;height:18px;margin-top:5px}
-.sparks rect{fill:var(--nhan)}
-tr.tong td{font-weight:700;background:var(--nen)}
-.hai-cot{display:grid;grid-template-columns:repeat(auto-fit,minmax(580px,1fr));gap:22px}
-.feed{display:flex;flex-direction:column;gap:0;border:1px solid var(--vien);border-radius:4px;
-  background:var(--mat);max-height:620px;overflow:auto}
-.feed div.m{display:grid;grid-template-columns:48px 112px 1fr;gap:10px;padding:9px 13px;
-  border-bottom:1px solid var(--vien);font-size:13px}
+.sparks rect{fill:var(--xanh)}
+tr.tong td{font-weight:700;background:var(--mo)}
+.hai-cot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:22px}
+.feed{display:flex;flex-direction:column;border:1px solid var(--vien);border-radius:12px;
+  background:var(--mat);max-height:640px;overflow:auto;box-shadow:var(--bong)}
+.feed div.m{display:grid;grid-template-columns:52px 118px 1fr;gap:10px;padding:11px 14px;
+  border-bottom:1px solid var(--vien);font-size:13px;align-items:start}
+.feed div.m:hover{background:var(--luot)}
 .feed div.m:last-child{border-bottom:none}
-.feed .ai{color:var(--nhat);font-size:12px}
-.feed .cau{color:var(--muc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nhan-kc{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-  padding:1px 6px;border-radius:3px;white-space:nowrap}
+.feed .ai{color:var(--nhat);font-size:12px;font-weight:600}
+/* Câu AI gửi: cho xuống 2 dòng thay vì cắt cụt một dòng — chủ shop cần ĐỌC được AI nói gì */
+.feed .cau{color:var(--muc);white-space:normal;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:2px}
+.nhan-kc{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;white-space:nowrap}
 .nhan-kc.gui{background:var(--nhan-mo);color:var(--nhan)}
 .nhan-kc.ghi_chu,.nhan-kc.gui_hong{background:var(--canh-mo);color:var(--canh)}
-.nhan-kc.treo{background:var(--nen);color:var(--nhat);box-shadow:inset 0 0 0 1px var(--vien)}
+.nhan-kc.treo{background:var(--mo);color:var(--nhat);box-shadow:inset 0 0 0 1px var(--vien)}
 .nhan-kc.chan{background:var(--nang-mo);color:var(--nang)}
-.canh-ds{display:flex;flex-direction:column;gap:6px}
+.canh-ds{display:flex;flex-direction:column;gap:8px}
 
 /* Thanh câu hỏi */
 .thanhds{display:flex;flex-direction:column;gap:9px}
 .dong{display:grid;grid-template-columns:1fr 46px;gap:12px;align-items:center}
-.ray{height:7px;background:var(--vien);border-radius:2px;overflow:hidden;margin-top:5px}
-.ray i{display:block;height:100%;background:var(--nhan)}
+.ray{height:8px;background:var(--mo);border-radius:999px;overflow:hidden;margin-top:5px}
+.ray i{display:block;height:100%;background:var(--grad);border-radius:999px}
 .pt{font-size:13px;color:var(--nhat);text-align:right}
 
 /* Thông báo nổi */
-#bao{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:9}
-.bao-mot{background:var(--muc);color:var(--nen);padding:11px 17px;border-radius:4px;
-  font-size:13.5px;font-weight:600;box-shadow:0 3px 14px rgba(0,0,0,.18);
-  animation:vao .18s ease-out}
+#bao{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:9px;z-index:50}
+.bao-mot{background:var(--muc);color:var(--nen);padding:11px 17px;border-radius:12px;
+  font-size:13.5px;font-weight:600;box-shadow:var(--bong-to);animation:vao .18s ease-out}
 .bao-mot.xau{background:var(--nang);color:#fff}
 @keyframes vao{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.bao-mot{animation:none}}
 .quay{display:inline-block;width:13px;height:13px;border:2px solid currentColor;
   border-right-color:transparent;border-radius:50%;animation:xoay .7s linear infinite;
   vertical-align:-2px;margin-right:7px}
 @keyframes xoay{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.bao-mot,.pill.that i{animation:none}}
 
-@media(max-width:820px){
-  #app{grid-template-columns:1fr}
-  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;
-    gap:12px;border-right:none;border-bottom:1px solid var(--vien)}
-  nav{flex-direction:row;flex-wrap:wrap}.trangthai{display:none}
-  main{padding:22px 16px 60px}
+/* ── Điện thoại: thanh bên thành ngăn kéo, mở bằng nút ☰ ── */
+#man{display:none}
+@media(max-width:860px){
+  #app{grid-template-columns:minmax(0,1fr)}
+  aside{position:fixed;inset:0 auto 0 0;width:280px;max-width:85vw;transform:translateX(-102%);
+    transition:transform .2s ease;box-shadow:var(--bong-to)}
+  body.mo-menu aside{transform:none}
+  body.mo-menu #man{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:15}
+  #mo_menu{display:grid}
+  header#dau{padding:10px 16px}
+  .vet>span{display:none}
+  main{padding:18px 16px 60px}
   .cuon.rong{width:auto;max-width:100%}
+  .feed div.m{grid-template-columns:44px 1fr}
+  .feed div.m>span:nth-child(2){grid-column:2}
+  .feed div.m>div{grid-column:1/-1}
+  #capnhat{display:none}
 }
 </style></head><body>
 <div id="app">
   <aside>
-    <div class="hieu"><b>AI Sale</b><span id="pv">đang tải…</span></div>
+    <div class="hieu">
+      <div class="logo"><img src="/logo.png" alt="" onerror="this.remove()">
+        <div><b>AI Sale</b><small>ANTALO · chat bán hàng</small></div></div>
+      <div id="pv">đang tải…</div>
+    </div>
     <nav id="nav"></nav>
     <div class="trangthai" id="tt"></div>
   </aside>
-  <main id="main"><p class="phu">Đang tải…</p></main>
+  <div class="cot">
+    <header id="dau">
+      <button class="nut-tron" id="mo_menu" aria-label="Mở menu">☰</button>
+      <div class="vet"><span>AI Sale ›</span><span class="ic" id="ic_tab"></span><b id="ten_tab">Đang tải…</b></div>
+      <div class="phai"><span id="pill"></span><span class="ghi so" id="capnhat"></span>
+        <button class="nut-tron" id="doi_nen" title="Đổi nền sáng / tối" aria-label="Đổi nền sáng tối">🌓</button></div>
+    </header>
+    <main id="main"><p class="phu">Đang tải…</p></main>
+  </div>
 </div>
+<div id="man"></div>
 <div id="bao"></div>
 <script>
 const $ = s => document.querySelector(s);
@@ -452,9 +571,37 @@ const kr = (a,b) => b < 10 ? `$${a.toFixed(2)}–${b.toFixed(2)}` : `$${n0(a)}�
 
 let S = null, TAB = 'toan', BAN = false, TIMER = null, TC_GIO = 24, TC_HEN = null;
 let PAGE = null, PCHON = null, LOC = -1, CHAN = null, CHO = null;
-const TABS = [['toan','Toàn cảnh các nước'],['tong','Tổng quan'],['page','Page & kịch bản'],['chan','Sổ cổng chặn'],
+const TABS = [['toan','Toàn cảnh'],['tong','Tổng quan'],['page','Page & kịch bản'],['chan','Sổ cổng chặn'],
               ['hangcho','Hàng chờ sale'],['cauhinh','Cấu hình'],['luat','Hướng dẫn trả lời'],
               ['tien','Tiền nong'],['hieusuat','Hiệu suất'],['do','Đo lại']];
+/* 12/11/2026 — thanh bên kiểu app ANTALO: biểu tượng + nhóm */
+const ICON = {toan:'🌏', tong:'📋', page:'📄', chan:'🛡️', hangcho:'🙋', cauhinh:'⚙️', luat:'📝',
+              tien:'💰', hieusuat:'📈', do:'🔁'};
+const NHOM = [['Theo dõi', ['toan','tong','hangcho','chan']], ['Thiết lập', ['page','luat','cauhinh']],
+              ['Chi phí & đo', ['tien','hieusuat','do']]];
+const TEN_TAB = Object.fromEntries(TABS);
+/* Nền sáng / tối: nhớ trên máy này (lỗi bộ nhớ trình duyệt thì thôi, vẫn chạy) */
+(function(){
+  try{ const t = localStorage.getItem('aisale_nen'); if(t) document.documentElement.dataset.theme = t; }catch(e){}
+  document.addEventListener('click', ev => {
+    if(ev.target.closest('#doi_nen')){
+      const r = document.documentElement, toi = r.dataset.theme ? r.dataset.theme === 'dark'
+        : matchMedia('(prefers-color-scheme: dark)').matches;
+      r.dataset.theme = toi ? 'light' : 'dark';
+      try{ localStorage.setItem('aisale_nen', r.dataset.theme); }catch(e){}
+    }
+    if(ev.target.closest('#mo_menu')) document.body.classList.add('mo-menu');
+    if(ev.target.closest('#man') || ev.target.closest('nav button')) document.body.classList.remove('mo-menu');
+  });
+})();
+/* Bot đang GỬI THẬT hay CHẠY THỬ — đọc từ file service trên máy chủ (S.bot) */
+function veTrangThaiBot(){
+  const b = S.bot || {};
+  const [lop, chu] = b.chay && b.chay !== 'active' ? ['tat', 'Bot đang tắt']
+    : b.that === true ? ['that', 'Đang gửi thật'] : b.that === false ? ['thu', 'Chạy thử — chưa gửi khách']
+    : ['', 'Không rõ trạng thái bot'];
+  $('#pill').innerHTML = `<span class="pill ${lop}" title="${H(b.unit || '')}"><i></i>${chu}</span>`;
+}
 const BACTEN = ['token hỏng','chưa có kịch bản','chưa có SKU','chưa có giá sàn','đủ'];
 
 function bao(t, xau){
@@ -492,14 +639,16 @@ function chuyen(t){
   BAN = false; TAB = t; ve();
 }
 function ve(){
-  $('#pv').innerHTML = `<select id="chontt" style="font:inherit;color:inherit;background:transparent;
-      border:1px solid var(--vien);border-radius:3px;padding:1px 4px;max-width:150px"></select>
-      <span style="margin-left:6px">${H(S.luc)}</span>`;
+  $('#pv').innerHTML = `<span>Thị trường</span><select id="chontt" aria-label="Chọn thị trường"></select>`;
+  $('#ic_tab').textContent = ICON[TAB] || '';
+  $('#ten_tab').textContent = TEN_TAB[TAB] || '';
+  $('#capnhat').textContent = S.luc ? 'cập nhật ' + S.luc : '';
+  veTrangThaiBot();
   (async () => {
     const t = await (await fetch('/api/thi-truong')).json();
     const sel = $('#chontt'); if(!sel) return;
     sel.innerHTML = t.ds.map(x =>
-      `<option value="${x.tt}"${(TT||S.mkey)===x.tt?' selected':''}>${x.tt} · ${x.so_page} page</option>`
+      `<option value="${x.tt}"${(TT||S.mkey)===x.tt?' selected':''}>${H(x.ten || x.tt)}</option>`
     ).join('');
     sel.onchange = async () => {
       TT = sel.value; PAGE = null; PCHON = null; LOC = -1; CHAN = null; CHO = null;
@@ -507,19 +656,20 @@ function ve(){
       await tai();
     };
   })();
-  $('#nav').innerHTML = TABS.map(([k,t]) =>
-    `<button data-t="${k}"${TAB===k?' aria-current="page"':''}>${t}`
-    + (k==='cauhinh' && cangBao() ? '<span class="cham"></span>' : '')
-    + (k==='do' && S.dochay ? '<span class="cham"></span>' : '') + '</button>').join('');
+  $('#nav').innerHTML = NHOM.map(([ten, ds]) => `<div class="nhom">${ten}</div>` + ds.map(k =>
+    `<button data-t="${k}"${TAB===k?' aria-current="page"':''}><span class="ic" aria-hidden="true">${ICON[k]}</span>`
+    + `<span class="ten">${TEN_TAB[k]}</span>`
+    + (k==='cauhinh' && cangBao() ? '<span class="cham" title="cấu hình còn thiếu"></span>' : '')
+    + (k==='do' && S.dochay ? '<span class="cham" title="đang đo"></span>' : '') + '</button>').join('')).join('');
   $('#nav').querySelectorAll('button').forEach(b =>
     b.onclick = () => chuyen(b.dataset.t));
   const c = S.cf;
-  $('#tt').innerHTML = [
+  $('#tt').innerHTML = '<div class="hop-tt">' + [
     ['Model', H(c.model)],
     ['Sáng tạo', c.nhiet_do==null ? 'mặc định 1.0' : c.nhiet_do],
     ['Trần ngày', c.ns_ngay ? usd(+c.ns_ngay) : 'không có'],
     ['Key', c.co_key[c.nha] ? 'đã dán' : 'THIẾU'],
-  ].map(([a,b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
+  ].map(([a,b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('') + '</div>';
   $('#main').classList.toggle('rong', TAB === 'tong' || TAB === 'toan');
   $('#main').classList.toggle('toan', TAB === 'toan');
   $('#main').innerHTML = ({toan:veToan, tong:veTong, page:vePage, chan:veChan, hangcho:veCho,
@@ -1653,10 +1803,21 @@ def chay(mkey=None, cong=8765, mo=True):
                         n = sum(1 for x in d.values() if x.get("token"))
                     except Exception:                    # noqa: BLE001
                         n = 0
-                    ra.append({"tt": tt, "so_page": n})
+                    try:
+                        ten = json.load(open(os.path.join(SCRIPT_DIR, "markets.json"),
+                                             encoding="utf-8")).get(tt, {}).get("ten") or tt
+                    except Exception:                    # noqa: BLE001
+                        ten = tt
+                    ra.append({"tt": tt, "so_page": n, "ten": ten})
                 return self._js({"ds": ra, "dang_mo": mkey})
             if self.path in ("/", "/index.html"):
                 return self._tra(200, TRANG)
+            if self.path in ("/logo.png", "/favicon.ico"):
+                # Logo ANTALO cho thanh bên — chép tay vào static/ (không đưa lên git công khai).
+                f = os.path.join(SCRIPT_DIR, "static", "antalo-mark.png")
+                if os.path.exists(f):
+                    return self._tra(200, open(f, "rb").read(), "image/png")
+                return self._tra(404, "chưa có logo")
             if self.path.split("?")[0] == "/api/du-lieu":
                 try:
                     d = du_lieu(self._tt())
