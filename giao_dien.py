@@ -519,6 +519,25 @@ tr.tong td{font-weight:700;background:var(--mo)}
 @keyframes xoay{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.bao-mot,.pill.that i{animation:none}}
 
+/* ── Báo cáo chat: tin khách / câu AI dạng bong bóng ── */
+.tn{background:var(--mat);border:1px solid var(--vien);border-radius:12px;padding:12px 14px;margin-bottom:10px;
+  box-shadow:var(--bong);display:flex;flex-direction:column;gap:7px}
+.tn-dau{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.tn-dau .gio{color:var(--nhat);font-size:12px;font-weight:600}
+.tn-kh,.tn-ai{display:grid;grid-template-columns:52px 1fr;gap:10px;font-size:13.5px;line-height:1.55}
+.tn-kh>span,.tn-ai>span{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--nhat);padding-top:9px}
+.tn-kh>div{background:var(--mo);border-radius:4px 12px 12px 12px;padding:8px 12px;white-space:pre-wrap}
+.tn-ai>div{background:var(--canh-mo);border:1px solid var(--canh-vien);border-radius:4px 12px 12px 12px;
+  padding:8px 12px;white-space:pre-wrap}
+.tn.chan .tn-ai>div{background:var(--nang-mo);border-color:var(--nang-vien)}
+.tn.gui .tn-ai>div{background:var(--nhan-mo);border-color:var(--nhan-vien)}
+.tn .gc{font-size:12.5px;color:var(--nhat);padding-left:62px;white-space:pre-wrap}
+.bc-cong{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.bc-cong input{max-width:260px;font-family:inherit}
+td.dc{white-space:normal;min-width:220px;text-align:left}
+@media(max-width:860px){.tn-kh,.tn-ai{grid-template-columns:1fr}.tn-kh>span,.tn-ai>span{padding-top:0}.tn .gc{padding-left:0}}
+
 /* ── Điện thoại: thanh bên thành ngăn kéo, mở bằng nút ☰ ── */
 #man{display:none}
 @media(max-width:860px){
@@ -571,13 +590,13 @@ const kr = (a,b) => b < 10 ? `$${a.toFixed(2)}–${b.toFixed(2)}` : `$${n0(a)}�
 
 let S = null, TAB = 'toan', BAN = false, TIMER = null, TC_GIO = 24, TC_HEN = null;
 let PAGE = null, PCHON = null, LOC = -1, CHAN = null, CHO = null;
-const TABS = [['toan','Toàn cảnh'],['tong','Tổng quan'],['page','Page & kịch bản'],['chan','Sổ cổng chặn'],
+const TABS = [['toan','Toàn cảnh'],['baocao','Báo cáo chat'],['tong','Tổng quan'],['page','Page & kịch bản'],['chan','Sổ cổng chặn'],
               ['hangcho','Hàng chờ sale'],['cauhinh','Cấu hình'],['luat','Hướng dẫn trả lời'],
               ['tien','Tiền nong'],['hieusuat','Hiệu suất'],['do','Đo lại']];
 /* 12/11/2026 — thanh bên kiểu app ANTALO: biểu tượng + nhóm */
-const ICON = {toan:'🌏', tong:'📋', page:'📄', chan:'🛡️', hangcho:'🙋', cauhinh:'⚙️', luat:'📝',
+const ICON = {toan:'🌏', baocao:'💬', tong:'📋', page:'📄', chan:'🛡️', hangcho:'🙋', cauhinh:'⚙️', luat:'📝',
               tien:'💰', hieusuat:'📈', do:'🔁'};
-const NHOM = [['Theo dõi', ['toan','tong','hangcho','chan']], ['Thiết lập', ['page','luat','cauhinh']],
+const NHOM = [['Theo dõi', ['toan','baocao','tong','hangcho','chan']], ['Thiết lập', ['page','luat','cauhinh']],
               ['Chi phí & đo', ['tien','hieusuat','do']]];
 const TEN_TAB = Object.fromEntries(TABS);
 /* Nền sáng / tối: nhớ trên máy này (lỗi bộ nhớ trình duyệt thì thôi, vẫn chạy) */
@@ -670,11 +689,11 @@ function ve(){
     ['Trần ngày', c.ns_ngay ? usd(+c.ns_ngay) : 'không có'],
     ['Key', c.co_key[c.nha] ? 'đã dán' : 'THIẾU'],
   ].map(([a,b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('') + '</div>';
-  $('#main').classList.toggle('rong', TAB === 'tong' || TAB === 'toan');
+  $('#main').classList.toggle('rong', TAB === 'tong' || TAB === 'toan' || TAB === 'baocao');
   $('#main').classList.toggle('toan', TAB === 'toan');
-  $('#main').innerHTML = ({toan:veToan, tong:veTong, page:vePage, chan:veChan, hangcho:veCho,
+  $('#main').innerHTML = ({toan:veToan, baocao:veBaoCaoChat, tong:veTong, page:vePage, chan:veChan, hangcho:veCho,
                            cauhinh:veCauHinh, luat:veLuat, tien:veTien, do:veDo, hieusuat:veHS})[TAB]();
-  ({toan:sauToan, cauhinh:sauCauHinh, luat:sauLuat, tien:sauTien, do:sauDo, tong:sauTong,
+  ({toan:sauToan, baocao:sauBaoCaoChat, cauhinh:sauCauHinh, luat:sauLuat, tien:sauTien, do:sauDo, tong:sauTong,
     page:sauPage, chan:sauChan, hangcho:sauCho, hieusuat:sauHS}[TAB] || (()=>{}))();
 }
 const cangBao = () => !S.cf.co_key[S.cf.nha] || !(S.cf.ns_ngay || S.cf.ns_tong)
@@ -821,6 +840,119 @@ async function sauToan(){
     TAB = 'tong'; bao('Đang mở ' + r.querySelector('b').textContent + '…'); await tai();
   });
   TC_HEN = setTimeout(() => { if(TAB === 'toan' && !document.hidden) sauToan(); }, 60000);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MÀN: BÁO CÁO CHAT (12/11/2026 — chủ shop: "dashboard thiếu báo cáo về các tin nhắn đã xử lí,
+   tin nhắn chốt và các số liệu khác"). Số đọc từ sổ trên đĩa (bao_cao_chat.py), không gọi model.
+   ═══════════════════════════════════════════════════════════════════════ */
+let BC = null, BC_NGAY = 7, BC_LOC = 'tat', BC_TIM = '', BC_SO = 60;
+const BC_KC = {gui:['Đã gửi khách','gui'], thu:['Chạy thử — chưa gửi','treo'], chan:['Bị chặn — sale trả lời','chan'],
+               treo:['Giao sale','ghi_chu'], gui_hong:['Gửi hỏng','gui_hong']};
+const THU_VN = ['CN','T2','T3','T4','T5','T6','T7'];
+/* Mã cổng chặn → chữ dễ hiểu (rê chuột vào thấy mã gốc) */
+const MA_VN = {khong_chot:'thiếu câu chốt', lot_tieng_viet:'lỗi tiếng Việt (đã sửa 09/11)', lot_tieng_anh:'lọt tiếng Anh',
+  bia_tien:'bịa giá', nhan_lap:'lặp câu trước', ket_thu_dong:'kết câu thụ động', dan_checklist:'hỏi lại thông tin đã có',
+  qua_dai:'câu quá dài', lap_sdt:'nhắc lại SĐT'};
+const maVN = m => `<code title="${H(m)}">${H(MA_VN[m] || m)}</code>`;
+function veBaoCaoChat(){
+  if(!S.mkey) return canMkey('Báo cáo chat');
+  return `<div id="bcc"><p class="phu"><span class="quay"></span>Đang đọc sổ chat…</p></div>`;
+}
+async function sauBaoCaoChat(){
+  try{ BC = await api('bao-cao-chat?ngay=' + BC_NGAY); }
+  catch(e){ if($('#bcc')) $('#bcc').innerHTML = `<div class="xau">Không đọc được sổ chat: ${H(e.message)}</div>`; return; }
+  if(TAB !== 'baocao' || !$('#bcc')) return;
+  veBCC();
+}
+function ngayVN(s){ const d = new Date(s + 'T00:00:00'); return `${THU_VN[d.getDay()]} ${s.slice(8,10)}/${s.slice(5,7)}`; }
+function veBCC(){
+  const k = BC, t = k.tong, traLoi = t.ai_tra_loi + t.ai_bo_sung, nhuong = t.im_da_du + t.im_khac;
+  const the = (a,b,c,mau) => `<div class="the"><span class="nhan-o">${a}</span>
+    <span class="so-to so"${mau ? ` style="color:var(--${mau})"` : ''}>${b}</span><span class="ghi">${c}</span></div>`;
+  const dem = {tat: k.viec.length};
+  k.viec.forEach(v => { dem[v.kc] = (dem[v.kc] || 0) + 1; if(v.chot) dem.chot = (dem.chot || 0) + 1; });
+  const tim = BC_TIM.trim().toLowerCase();
+  const loc = k.viec.filter(v => (BC_LOC === 'tat' || (BC_LOC === 'chot' ? v.chot : v.kc === BC_LOC))
+    && (!tim || (v.khach + ' ' + v.hoi + ' ' + v.tin).toLowerCase().includes(tim)));
+  const nutLoc = [['tat','Tất cả'],['gui','Đã gửi khách'],['thu','Chạy thử'],['chan','Bị chặn'],['treo','Giao sale'],['chot','Chốt đơn']]
+    .filter(([m]) => m === 'tat' || dem[m])
+    .map(([m,ten]) => `<button data-loc="${m}"${BC_LOC===m?' aria-pressed="true"':''}>${ten} · ${dem[m] || 0}</button>`).join('');
+
+  $('#bcc').innerHTML = `
+  <div class="dau-trang"><h1>Báo cáo chat — ${k.ngay === 1 ? 'hôm nay' : k.ngay + ' ngày gần nhất'}</h1>
+    <p class="phu">Từ ${k.tu.split('-').reverse().join('/')} đến ${k.den.split('-').reverse().join('/')} (giờ Việt Nam) · lập lúc ${H(k.luc)}.
+      Đếm từ sổ của AI: mỗi lượt khách nhắn, mỗi câu AI soạn / gửi, hồ sơ khách AI gom được.</p>
+    <div class="loc" style="margin:8px 0 0">${[[1,'Hôm nay'],[7,'7 ngày'],[30,'30 ngày']].map(([g,ten]) =>
+      `<button data-n="${g}"${BC_NGAY===g?' aria-pressed="true"':''}>${ten}</button>`).join('')}
+      <button id="bc_lai" style="margin-left:auto">Làm mới</button></div></div>
+
+  <section><div class="luoi">
+    ${the('Lượt khách nhắn', n0(t.luot_khach), `${n0(t.hoi_thoai)} hội thoại`)}
+    ${the('AI trả lời', n0(traLoi), `${t.ai_tra_loi} tự trả lời · ${t.ai_bo_sung} bổ sung sau Botcake/sale`)}
+    ${the('Đã gửi tới khách', n0(t.gui), t.thu ? `${t.thu} câu chạy thử chưa gửi` : 'tin AI khách đã nhận', 'nhan')}
+    ${the('AI nhường', n0(nhuong), `${t.im_da_du} Botcake/sale đã trả lời đủ · ${t.im_khac} sale đang chat, tin cũ, tin quảng cáo`)}
+    ${the('Giao sale', n0(t.treo + t.chan + t.gui_hong), `${t.treo} AI không tự lo · ${t.chan} bộ lọc chặn${t.gui_hong ? ' · ' + t.gui_hong + ' gửi hỏng' : ''}`,
+          (t.treo + t.chan + t.gui_hong) ? 'canh' : '')}
+    ${the('Khách chốt', n0(t.chot), 'đủ tên, SĐT, địa chỉ — sale lên đơn', t.chot ? 'nhan' : '')}
+    ${the('Tỷ lệ chốt', t.hoi_thoai ? pct(t.chot, t.hoi_thoai) : '–', 'khách chốt / hội thoại có khách nhắn')}
+  </div></section>
+
+  <section><h2>Theo từng ngày</h2>
+    <div class="cuon"><table>
+      <thead><tr><th class="trai">Ngày</th><th>Lượt khách nhắn</th><th>Hội thoại</th><th>AI trả lời</th>
+        <th>Đã gửi khách</th><th>Chạy thử</th><th>AI nhường</th><th>Giao sale</th><th>Khách chốt</th></tr></thead>
+      <tbody>${k.theo_ngay.map(d => `<tr><td class="trai"><b>${ngayVN(d.ngay)}</b></td>
+        <td class="so">${d.luot_khach || '–'}</td><td class="so">${d.hoi_thoai || '–'}</td>
+        <td class="so">${(d.ai_tra_loi + d.ai_bo_sung) || '–'}</td>
+        <td class="so" style="color:var(--nhan);font-weight:700">${d.gui || '–'}</td><td class="so">${d.thu || '–'}</td>
+        <td class="so">${(d.im_da_du + d.im_khac) || '–'}</td>
+        <td class="so"${(d.treo + d.chan) ? ' style="color:var(--canh);font-weight:700"' : ''}>${(d.treo + d.chan + d.gui_hong) || '–'}</td>
+        <td class="so"><b>${d.chot || '–'}</b></td></tr>`).join('')}
+        <tr class="tong"><td class="trai">Tổng</td><td class="so">${n0(t.luot_khach)}</td><td class="so">${n0(t.hoi_thoai)}</td>
+          <td class="so">${n0(traLoi)}</td><td class="so">${n0(t.gui)}</td><td class="so">${n0(t.thu)}</td>
+          <td class="so">${n0(nhuong)}</td><td class="so">${n0(t.treo + t.chan + t.gui_hong)}</td><td class="so">${n0(t.chot)}</td></tr>
+      </tbody></table></div>
+    <p class="phu" style="margin-top:8px">“AI nhường” = AI cố ý không trả lời: Botcake hoặc sale đã trả lời đủ ý, sale đang chat với khách,
+      tin khách đã cũ hoặc là tin quảng cáo. “Giao sale” = AI để lại cho sale (đánh dấu chưa đọc + ghi chú).</p></section>
+
+  <section><h2>Khách đã chốt — chờ sale lên đơn</h2>
+    ${k.chot.length ? `<div class="cuon"><table>
+      <thead><tr><th class="trai">Lúc</th><th class="trai">Khách (Facebook)</th><th class="trai">Tên nhận</th>
+        <th class="trai">SĐT</th><th class="trai">Địa chỉ</th><th class="trai">Số lượng</th></tr></thead>
+      <tbody>${k.chot.map(c => `<tr><td class="trai so">${H(c.gio)}</td><td class="trai"><b>${H(c.khach)}</b></td>
+        <td class="trai">${H(c.ten) || '<span class="ghi">—</span>'}</td><td class="trai so">${H(c.sdt) || '<span class="ghi">—</span>'}</td>
+        <td class="dc">${H(c.dia_chi) || '<span class="ghi">—</span>'}</td><td class="trai">${H(c.so_luong) || '<span class="ghi">—</span>'}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="phu" style="margin-top:8px">AI đang KHÔNG tự lên đơn (AI_LEN_DON=0): sale đối chiếu hội thoại rồi lên đơn trên Pancake POS.
+        Thông tin do AI đọc từ lời khách — sale soát lại trước khi lên đơn.</p>`
+      : '<div class="trong">Chưa có khách nào cho đủ tên, SĐT, địa chỉ trong khoảng này.</div>'}</section>
+
+  <section><h2>Tin nhắn AI đã xử lý</h2>
+    <div class="bc-cong"><div class="loc" style="margin:0">${nutLoc}</div>
+      <input id="bc_tim" type="search" placeholder="Tìm tên khách hoặc nội dung…" value="${H(BC_TIM)}"></div>
+    <div id="bc_ds">${loc.slice(0, BC_SO).map(v => {
+      const [nhan, lop] = BC_KC[v.kc] || [v.kc, 'treo'];
+      return `<div class="tn ${v.kc}">
+        <div class="tn-dau"><span class="gio so">${H(v.gio)}</span><b>${H(v.khach || 'khách')}</b>
+          <span class="nhan-kc ${lop}">${nhan}</span>${v.chot ? '<span class="nhan-kc gui">Chốt đơn</span>' : ''}
+          ${v.anh ? `<span class="ghi">🖼 ${v.anh} ảnh</span>` : ''}
+          ${(v.ma || []).map(maVN).join(' ')}</div>
+        ${v.hoi ? `<div class="tn-kh"><span>Khách</span><div>${H(v.hoi)}</div></div>` : ''}
+        <div class="tn-ai"><span>AI</span><div>${H(v.tin) || '<span class="ghi">không soạn câu — để sale trả lời</span>'}</div></div>
+        ${v.ghi_chu ? `<div class="gc">📝 ${H(v.ghi_chu)}</div>` : ''}</div>`; }).join('')
+      || '<div class="trong">Không có tin nào khớp.</div>'}
+      ${loc.length > BC_SO ? `<div class="thanh-nut"><button class="nut vien" id="bc_them">Xem thêm (còn ${loc.length - BC_SO})</button></div>` : ''}
+    </div>
+    ${k.so_viec > k.viec.length ? `<p class="phu" style="margin-top:8px">Hiện ${k.viec.length}/${k.so_viec} việc mới nhất.</p>` : ''}</section>`;
+
+  $('#bcc').querySelectorAll('button[data-n]').forEach(b => b.onclick = () => {
+    BC_NGAY = +b.dataset.n; BC_SO = 60; $('#bcc').insertAdjacentHTML('afterbegin', '<p class="phu"><span class="quay"></span>Đang đọc…</p>'); sauBaoCaoChat(); });
+  $('#bc_lai').onclick = () => sauBaoCaoChat();
+  $('#bcc').querySelectorAll('button[data-loc]').forEach(b => b.onclick = () => { BC_LOC = b.dataset.loc; BC_SO = 60; veBCC(); });
+  const o = $('#bc_tim');
+  o.oninput = () => { BC_TIM = o.value; clearTimeout(o._h); o._h = setTimeout(() => { veBCC(); const n = $('#bc_tim'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  if($('#bc_them')) $('#bc_them').onclick = () => { BC_SO += 60; veBCC(); };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1831,6 +1963,16 @@ def chay(mkey=None, cong=8765, mo=True):
                     return self._js({"loi": "màn này cần thị trường"}, 400)
                 try:
                     return self._js(bao_cao_tien.bao_cao(tt))
+                except Exception as ex:                # noqa: BLE001
+                    return self._js({"loi": str(ex)}, 500)
+            if self.path.split("?")[0] == "/api/bao-cao-chat":
+                import bao_cao_chat
+                tt = self._tt()
+                if not tt:
+                    return self._js({"loi": "màn này cần thị trường"}, 400)
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                try:
+                    return self._js(bao_cao_chat.bao_cao_chat(tt, int((q.get("ngay") or ["7"])[0] or 7)))
                 except Exception as ex:                # noqa: BLE001
                     return self._js({"loi": str(ex)}, 500)
             if self.path.split("?")[0] == "/api/toan-canh":
