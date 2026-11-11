@@ -81,6 +81,7 @@ VIEC_KHI_CHAN = {
     "hen_qua_han": "Ngày khách hẹn quá hạn giữ đơn — xin khách chọn ngày trong hạn.",
     "bao_han_som": "Khách chưa hẹn ngày quá hạn — đừng báo hạn giữ đơn trước.",
     "lot_tieng_viet": "Câu lọt tiếng Việt (hướng dẫn nội bộ) — viết lại đúng tiếng khách.",
+    "lot_tieng_anh": "Câu gửi khách Việt có chữ tiếng Anh — viết lại toàn tiếng Việt.",
     "khong_chot": "Câu chốt sớm giữa kịch bản tư vấn — đi đúng bước kịch bản.",
     "lap_sdt": "Câu lặp lại số điện thoại — bỏ.",
     "qua_dai": "Câu quá dài — viết 1-2 câu.",
@@ -554,6 +555,14 @@ MA_RIENG = {
 # tệ gắn sai 6 page trang sức vào Việt Nam vì đúng chữ "k" này). Không bật thì 12 nước cũ y như trước.
 MA_VND = r"(?<![a-z])k(?![a-zà-ỹđ])|vnđ|vnd|(?<![a-zà-ỹđ])đ(?![a-zà-ỹđ])|đồng|nghìn|ngàn"
 MA_RIENG["vietnam"] = MA_VND
+TT_TIENG_VIET_CG = {"vietnam"}
+# Lời mời chốt kiểu Việt không cần dấu "?": "Anh/chị cho em xin số điện thoại và địa chỉ… nha", "gửi em… để em lên đơn".
+# Đo 12/11 trên 91 câu cũ: 18 câu xin SĐT/địa chỉ đúng bước bị khong_chot bắt viết lại chỉ vì thiếu dấu "?".
+VN_MOI_CHOT = re.compile(r"cho (?:em|con|cháu|mình) xin|xin (?:anh|chị|mình|cô|chú|bác)|gửi (?:giúp |lại )?(?:em|con|cháu)"
+                         r"|để (?:em|con|cháu) (?:lên|chốt|giữ)|(?:em|con|cháu) lên đơn|lên đơn (?:luôn|cho)|chốt đơn|đặt hàng"
+                         r"|giữ hàng", re.I)
+LOT_ANH = re.compile(r"\b(?:would|you|your|please|reserve|today|contact|number|address|thank|thanks|shipping"
+                     r"|delivery|order|we|our|let me|may i|can i)\b", re.I)
 if os.environ.get("AI_TIEN_VND") == "1":
     _MA_TIEN = _MA_TIEN + "|" + MA_VND
 
@@ -1923,6 +1932,12 @@ def kiem(tin, mkey=None, kb_page=None, gia=None, tin_truoc=None, co_anh=False,
                 "tin không có chữ nào" + (" — khách sẽ chỉ nhận ảnh trơ" if co_anh else ""))
         return pq                                    # rỗng thì các luật sau vô nghĩa
 
+    # ── 2b. thị trường tiếng Việt mà câu lọt tiếng Anh (12/11/2026, bản clone) ──────────────
+    # Bộ luật + lời dặn viết cho nước ngoài, model hay mang theo "contact number", "Would you like…". Từ tiếng Anh
+    # chen trong câu Việt bình thường (ship, COD, combo, mix, ok, size) KHÔNG nằm trong danh sách này.
+    if mkey in TT_TIENG_VIET_CG and LOT_ANH.search(t):
+        pq.them(NANG, "lot_tieng_anh",
+                f"câu gửi khách Việt có chữ tiếng Anh ('{LOT_ANH.search(t).group(0)}') — viết lại toàn tiếng Việt")
     # ── 2. lọt tiếng Việt ─────────────────────────────────────────────────────
     if _diem_tieng_viet(t) >= 2 and not khach_viet:        # VIET_2709 — khách TỰ viết tiếng Việt thì được trả lời tiếng Việt
         pq.them(NANG, "lot_tieng_viet",
@@ -2085,7 +2100,8 @@ def kiem(tin, mkey=None, kb_page=None, gia=None, tin_truoc=None, co_anh=False,
         pq.them(NHAC, "qua_dai", f"{len(t)} ký tự — mục 5b yêu cầu ngắn gọn")
     # 'tra_loi_treo' = rep 1 câu rồi giao sale (chủ shop chốt 2026-09-12): câu bàn giao
     # KHÔNG được kết bằng câu hỏi chốt đơn — hỏi tiếp là lại mở thêm một vòng cãi nhau.
-    if not DAU_HOI.search(t) and hanh_dong not in ("len_don", "tra_loi_treo"):
+    if (not DAU_HOI.search(t) and hanh_dong not in ("len_don", "tra_loi_treo")
+            and not (mkey in TT_TIENG_VIET_CG and VN_MOI_CHOT.search(t))):    # 12/11 — lời xin SĐT/địa chỉ kiểu Việt là chốt
         pq.them(muc_vp, "khong_chot",
                 "không có câu hỏi nào — mục 5b#2: mọi tin phải kết bằng câu hỏi hướng tới mua hàng")
     elif THU_DONG.search(t.strip()) and not DAU_HOI.search(t.strip()[-60:]):

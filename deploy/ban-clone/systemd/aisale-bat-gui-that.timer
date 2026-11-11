@@ -1,0 +1,7 @@
+[Unit]
+Description=Hen gio bat GUI THAT bot Viet Nam: 08:00 gio VN ngay 13/11/2026
+[Timer]
+OnCalendar=2026-11-13 01:00:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target

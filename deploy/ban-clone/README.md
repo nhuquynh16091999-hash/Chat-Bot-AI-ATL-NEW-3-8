@@ -16,6 +16,8 @@ Thư mục này chứa các file cài **ngoài** `/opt/pancake-tool` trên serve
 ```bash
 ssh -t root@139.180.131.21 cai-key-shop vietnam   # dán / đổi key (dán nguyên đoạn, lệnh tự nhận)
 ssh root@139.180.131.21 mo-web                    # đổi mạng mà web báo 403 → mở cho IP mới
+ssh root@139.180.131.21 ai-sale-gui-that tat      # TẮT KHẨN CẤP gửi thật (về chạy thử)
+ssh root@139.180.131.21 ai-sale-gui-that xem      # đang gửi thật hay chạy thử
 ssh root@139.180.131.21 'tail -f /var/log/aisale-chat-vietnam.log'
 ```
 
@@ -24,3 +26,8 @@ ssh root@139.180.131.21 'tail -f /var/log/aisale-chat-vietnam.log'
 - Bot đang **CHẠY THỬ**: service không có cờ `--that`, nên không gửi gì cho khách. Muốn gửi thật thì thêm `--that` vào `ExecStart`, nhưng chỉ khi chủ shop đã duyệt.
 - Đã **tắt tự gắn page theo tiền tệ**: `state/chung/tu_gan_luc.txt` = `9999999999`. Chữ `k` của VND khớp nhầm "18k vàng", gắn sai 6 page trang sức vào Việt Nam.
 - Đổi DNS sang `1.1.1.1` / `8.8.8.8`. DNS Vultr `108.61.10.10` thỉnh thoảng trả sai IP pancake.vn, làm tải kịch bản lỗi SSL. Bản cũ ở `/root/resolv.conf.truoc-doi-dns`.
+- 12/11: chuẩn bị gửi thật. Biến môi trường của bot Việt Nam:
+  - `AI_TEN_TAI_KHOAN=Sỹ Anh Antalo`: tài khoản AI gửi tin. Người chat tay bằng tài khoản này sẽ bị coi là AI, nên tách tài khoản riêng cho AI.
+  - `AI_NHUONG_SALE_PHUT=30`: sale nhắn khách trong 30 phút gần nhất thì AI tránh hội thoại đó.
+  - `AI_LEN_DON=0`: AI chốt với khách nhưng không tự tạo đơn POS. Câu chốt vẫn gửi, ghi chú dặn sale lên đơn.
+- `aisale-bat-gui-that.timer`: hẹn giờ bật gửi thật (thêm `--that`).

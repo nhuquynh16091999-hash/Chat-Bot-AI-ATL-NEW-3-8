@@ -1,0 +1,22 @@
+#!/bin/bash
+# Bật / tắt GỬI THẬT cho bot AI Sale (bản clone). Không đổi gì khác.
+#   ssh root@139.180.131.21 ai-sale-gui-that xem    # đang gửi thật hay chạy thử
+#   ssh root@139.180.131.21 ai-sale-gui-that tat    # TẮT KHẨN CẤP: về chạy thử, không gửi gì cho khách nữa
+#   ssh root@139.180.131.21 ai-sale-gui-that bat    # bật gửi thật
+set -euo pipefail
+NUOC="${2:-vietnam}"
+U=/etc/systemd/system/aisale-chat-$NUOC.service
+[ -f "$U" ] || { echo "✗ Không có bot nước $NUOC"; exit 1; }
+case "${1:-xem}" in
+  bat) grep -qE "^ExecStart=.* --that$" "$U" || sed -i -E "s#^(ExecStart=.*theo_doi $NUOC .*)\$#\1 --that#" "$U" ;;
+  tat) sed -i -E "s#^(ExecStart=.*) --that\$#\1#" "$U" ;;
+  xem) ;;
+  *) echo "Dùng: ai-sale-gui-that xem|bat|tat"; exit 1 ;;
+esac
+if [ "${1:-xem}" != xem ]; then
+    systemctl daemon-reload
+    systemctl restart "aisale-chat-$NUOC"
+    echo "$(date -u '+%d/%m %H:%M UTC') ai-sale-gui-that $1 $NUOC" >> /var/log/aisale-gui-that.log
+fi
+if grep -qE "^ExecStart=.* --that$" "$U"; then echo "Bot $NUOC: ĐANG GỬI THẬT cho khách"; else echo "Bot $NUOC: CHẠY THỬ (không gửi gì cho khách)"; fi
+echo "Dịch vụ: $(systemctl is-active aisale-chat-$NUOC)"

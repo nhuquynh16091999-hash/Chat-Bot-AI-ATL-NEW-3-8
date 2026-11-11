@@ -1,0 +1,5 @@
+[Unit]
+Description=AI Sale (ban clone) - bat GUI THAT cho bot Viet Nam (chu shop hen 12/11/2026: tu ngay mai gui that)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ai-sale-gui-that bat vietnam

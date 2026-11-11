@@ -8857,6 +8857,14 @@ def ai_co_vao_cuoc(msgs, co_anh_fb=None):
     khach = [k for k, m in enumerate(msgs) if m["boi"] == "khach"]
     if not khach:
         return "im", "chưa có tin nào của khách"
+    # 12/11/2026 (bản clone): sale vừa chat tay với khách trong AI_NHUONG_SALE_PHUT phút → AI tránh.
+    _phut_ns_ = _so_env("AI_NHUONG_SALE_PHUT", 0)
+    if _phut_ns_ > 0:
+        for _m_ in reversed(msgs):
+            if (_m_["boi"] == "nguoi" and (_m_.get("ten") or "").strip() not in _KHONG_PHAI_SALE
+                    and _giay_tu(_m_.get("luc")) <= _phut_ns_ * 60):
+                return "im", (f"sale {(_m_.get('ten') or '').strip()} đang chat với khách (nhắn "
+                              f"{int(_giay_tu(_m_.get('luc')) // 60)} phút trước) — AI tránh")
     i = khach[-1]
     sau = [m["boi"] for m in msgs[i + 1:]]
     # SALE ĐÃ REP: KHÔNG im mù nữa (chủ shop 20/09: *"sale rep xong, đủ ý rồi thì thôi, nếu chưa đủ ý
@@ -15974,6 +15982,41 @@ def so_tien_kieu_viet(t):
 TT_TIENG_VIET = {"vietnam"}
 _TT_DANG_CHAY = {"mkey": None}
 
+# 12/11/2026 (bản clone, trước khi gửi thật): model mang theo chữ tiếng Anh của bộ luật viết cho nước ngoài
+# ("contact number" — đo 09-11/11: 3/91 câu). Máy đổi các cụm hay gặp sang tiếng Việt TRƯỚC cổng chặn; cụm
+# tiếng Anh khác còn sót thì cổng chặn lot_tieng_anh (chan_gui) giữ lại, ghi chú cho sale.
+_CUM_ANH_VIET = [
+    (r"\bcontact\s+numbers?\b", "số điện thoại"),
+    (r"\bphone\s+numbers?\b", "số điện thoại"),
+    (r"\bfull\s+name\b", "họ tên"),
+    (r"\b(?:complete|full)\s+(?:delivery\s+)?address\b", "địa chỉ đầy đủ"),
+    (r"\bdelivery\s+address\b", "địa chỉ nhận hàng"),
+]
+
+
+def viet_hoa_cum_anh(t):
+    for rx, vi in _CUM_ANH_VIET:
+        t = re.sub(rx, vi, t, flags=re.I)
+    return t
+
+
+# 12/11/2026 (bản clone, shop VIỆT NAM có sale chat tay): AI_NHUONG_SALE_PHUT > 0 → sale (người thật, không phải
+# Botcake / POS / tài khoản của AI) nhắn khách trong N phút gần nhất thì AI TRÁNH hội thoại đó, và sale chen vào
+# lúc AI đang soạn thì AI KHÔNG gửi. Đảo luật "không nhường sale" của shop cũ (20/09) — chỉ bật khi đặt biến.
+_KHONG_PHAI_SALE = {"", "POS", "khách", "Botcake", "Public API"}
+
+
+def _nhuong_sale_bat(ai_vuot=None):
+    if _so_env("AI_NHUONG_SALE_PHUT", 0) <= 0:
+        return False
+    return ai_vuot is None or str(ai_vuot).strip() not in _KHONG_PHAI_SALE
+
+
+# 12/11/2026: AI_LEN_DON=0 → AI chốt với khách nhưng KHÔNG tự tạo đơn POS (page chưa gắn SKU, sale đang lên đơn
+# tay — tự tạo dễ trùng đơn). Câu chốt vẫn gửi, ghi chú dặn sale lên đơn.
+def len_don_tat():
+    return str(os.environ.get("AI_LEN_DON") or env().get("AI_LEN_DON") or "1").strip() == "0"
+
 
 def khach_noi_tieng_viet(msgs):
     """Tin khách có chữ gần nhất (xét tối đa 4 tin, bỏ qua tin cụt 1-2 chữ) là TIẾNG VIỆT rõ (điểm ≥ 4) → True."""
@@ -17589,6 +17632,9 @@ def cau_chot_may(tin, msgs=None):
     t = str(tin or "").strip()
     if not t or CG.DAU_HOI.search(t) or MOI_CHOT.search(t):
         return None
+    # 12/11/2026: câu tiếng Việt bị đo nhầm là "en" → máy gắn "Would you like me to reserve one for you today?"
+    if _TT_DANG_CHAY["mkey"] in TT_TIENG_VIET or CG._diem_tieng_viet(t) >= 2:
+        return None
     cau = CAU_CHOT_MAY.get(CG.ngon_ngu(t) or "")
     if not cau:
         return None
@@ -18025,6 +18071,11 @@ def _phan_hoi(pid, conv_id, cus_id, token, tin, anh=None, gc=None, that=False, n
             if dem is not None:
                 dem["sua_ngay_giao"] = dem.get("sua_ngay_giao", 0) + 1
             tin = _tin_ng
+    if tin and _TT_DANG_CHAY["mkey"] in TT_TIENG_VIET:          # 12/11 — "contact number" → "số điện thoại"
+        _tin_vh_ = viet_hoa_cum_anh(tin)
+        if _tin_vh_ != tin:
+            print(f"{nhan} 🇻🇳 đổi cụm tiếng Anh sang tiếng Việt")
+            tin = _tin_vh_
     co_tin = bool(tin)       # AI có soạn câu cho khách lượt này (dùng để gắn tag ở cuối)
     ket_chan, ma_chan = "qua", []
     if tin or hanh_dong in ("im", "treo", "xac_minh_nha"):
@@ -18133,6 +18184,11 @@ def _phan_hoi(pid, conv_id, cus_id, token, tin, anh=None, gc=None, that=False, n
             danh_dau_da_xem(mkey, pid, conv_id, token, _kh_[-1] if _kh_ else None, that, nhan,
                             "Botcake rep trong lúc AI soạn", dang_doc=True)       # 19/09: qua cửa sale đã xem
             return True
+        if vuot and _nhuong_sale_bat(ai_vuot):              # 12/11 — bản clone: sale chat tay thì AI nhường
+            print(f"{nhan} 🤝 sale {ai_vuot} vừa rep trong lúc AI soạn — nhường sale, không gửi")
+            if dem is not None:
+                dem["nhuong"] = dem.get("nhuong", 0) + 1
+            return True
         if vuot:
             # KHÔNG NHƯỜNG SALE (chủ shop 20/09: *"k nhường sale, tôi dặn rồi"*, nhắc lại lời 17/09 tối
             # "bạn phụ sale, phải trả lời thay sale; botcake trả lời đúng rồi thì mới không phải trả lời").
@@ -18211,6 +18267,11 @@ def _phan_hoi(pid, conv_id, cus_id, token, tin, anh=None, gc=None, that=False, n
                     _kh_ = [m for m in msgs_luc_soan if m.get("boi") == "khach"]
                     danh_dau_da_xem(mkey, pid, conv_id, token, _kh_[-1] if _kh_ else None, that, nhan,
                                     "Botcake rep trong lúc AI soạn", dang_doc=True)
+                    return True
+                elif _nhuong_sale_bat(ai_vuot):                  # 12/11 — bản clone: sale chat tay thì AI nhường
+                    print(f"{nhan} 🤝 sale {ai_vuot} vừa rep lúc AI đợi nhịp gửi — nhường sale, không gửi chữ{_anh_}")
+                    if dem is not None:
+                        dem["nhuong"] = dem.get("nhuong", 0) + 1
                     return True
                 else:
                     # sale chen vào lúc AI đợi nhịp gửi — chủ shop 20/09: không nhường sale, vẫn gửi câu đã soạn.
@@ -18577,6 +18638,9 @@ def len_don(mkey, pid, ten_page, conv_id, msgs, token, that=False, im_neu_khong_
     Cố ý KHÔNG viết lại phần lên đơn: chống trùng, quy ước tiền (thu -> shipping_fee, hàng để 0),
     hộp trang sức, ĐVVC, chuẩn hoá SĐT... đều đã có và đã chạy thật ở đó.
     """
+    if len_don_tat():                                    # 12/11 — AI_LEN_DON=0
+        print(f"     🧾 tự lên đơn đang TẮT (AI_LEN_DON=0) — ghi chú để sale lên đơn tay")
+        return
     D, record, products = _goi_len_don(mkey, pid, ten_page, conv_id, msgs, token)
     # Model đã chốt: sale có hủy đơn trước đó thì chỉ cần khách nhắn gì SAU lúc hủy là lên lại
     # (lên đơn sớm thì phải có SĐT/địa chỉ mới) — xem auto_len_don.don_huy_cua_thuong_vu.
@@ -18778,6 +18842,8 @@ def len_don_som(mkey, pid, ten_page, conv_id, msgs, token, ho_so_khach, that=Fal
     khác là nháp nằm ở "Mới" cho tới khi AI đi hết chốt 1 + chốt 2 của mục 9b rồi chọn "len_don".
     Trả về "khách đã cho gì" nếu có đụng đơn, None nếu chưa có gì để lên.
     """
+    if len_don_tat():                                    # 12/11 — AI_LEN_DON=0: không lên đơn sớm
+        return None
     D, record, products = _goi_len_don(mkey, pid, ten_page, conv_id, msgs, token)
     # Thị trường thu tiền sau (Mỹ/Úc): tạo nháp như mọi nơi, nhưng bước này KHÔNG tự chuyển
     # "Đã xác nhận" — phải qua xác minh nhà + phương thức thanh toán (mục 9b) rồi model mới
@@ -22274,7 +22340,8 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
                     print(f"{nhan} 🧾 CHỐT ĐƠN — {qd.get('ly_do','')[:60]}")
                     print(f"{nhan} 💬 {tin[:180]}")
                     xong = _phan_hoi(pid, c["id"], cus_id, st["token"], tin, None,
-                                     qd.get("ghi_chu") or "AI đã chốt đơn, sale check giúp",
+                                     (qd.get("ghi_chu") or "AI đã chốt đơn, sale check giúp")
+                                     + (" — AI KHÔNG tự lên đơn: sale lên đơn trên POS giúp" if len_don_tat() else ""),
                                      that, nhan,
                                      anh_urls=anh_kem_luot(kb_page, qd, tin, msgs, mkey, pid, nhan, dem),
                                      anh_loai=qd.get("anh_ep_loai"), mkey=mkey,
