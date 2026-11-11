@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mở trang quản lý AI Sale (https://139.180.131.21:8449) cho IP của máy đang SSH vào.
-#   ssh root@139.180.131.21 mo-web            thêm IP hiện tại (giữ 5 IP gần nhất)
+#   ssh root@139.180.131.21 mo-web            thêm IP hiện tại (giữ 3 IP gần nhất)
 #   ssh root@139.180.131.21 mo-web --xem      xem các IP đang được mở
 #   ssh root@139.180.131.21 mo-web --dong-het chặn hết (không ai mở được web nữa)
 set -euo pipefail
@@ -21,9 +21,14 @@ ip="${SSH_CLIENT%% *}"
 if ! [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ || "$ip" =~ ^[0-9a-fA-F:]+$ ]]; then
     echo "✗ Không đọc được IP của máy đang SSH vào (chạy lệnh này qua ssh)."; exit 1
 fi
+# IP này đang đứng đầu danh sách rồi → khỏi ghi, khỏi nạp lại nginx (máy Mac gọi lệnh này 5 phút/lần).
+if [ "$(grep -m1 -oE "^allow [^;]+" "$F" 2>/dev/null)" = "allow $ip" ]; then
+    echo "✓ IP $ip đã được mở sẵn — https://139.180.131.21:8449"; exit 0
+fi
 cp -p "$F" "$F.truoc"
+# Giữ IP mới + 2 IP gần nhất: IP nhà mạng cấp động, IP cũ sẽ về tay khách khác của nhà mạng.
 { echo "allow $ip;  # $(date '+%d/%m/%Y %H:%M')"
-  grep -E "^allow " "$F" | grep -vF "allow $ip;" | head -4 || true; } > "$F.moi"
+  grep -E "^allow " "$F" | grep -vF "allow $ip;" | head -2 || true; } > "$F.moi"
 mv "$F.moi" "$F"
 nap_lai
 echo "✓ Đã mở web cho IP $ip"
