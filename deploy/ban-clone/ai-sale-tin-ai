@@ -1,0 +1,28 @@
+#!/usr/bin/python3.12
+# -*- coding: utf-8 -*-
+"""Danh sách tin AI Sale đã GỬI THẬT cho khách — để tách tin AI khỏi tin người gõ dưới cùng tài khoản Pancake.
+
+  ssh root@139.180.131.21 ai-sale-tin-ai [số ngày, mặc định 2] [nước, mặc định vietnam]
+
+In TSV: giờ VN · giờ UTC (ISO) · conversation_id · kết cục · 80 ký tự đầu câu AI (xuống dòng thay bằng ⏎).
+Pancake không có trường nào đánh dấu tin gửi bằng API tài khoản (chưa kiểm chứng) → khớp theo conversation_id +
+giờ gửi (lệch ≤ 2 phút) + đầu câu. Nguồn: state/<nước>/so_viec.jsonl của bot.
+"""
+import json, sys, time
+from datetime import datetime, timezone, timedelta
+ngay = float(sys.argv[1]) if len(sys.argv) > 1 else 2
+tt = sys.argv[2] if len(sys.argv) > 2 else "vietnam"
+VN = timezone(timedelta(hours=7)); moc = time.time() - ngay * 86400
+print("gio_vn\tgio_utc\tconversation_id\tket_cuc\tdau_cau_ai")
+for ln in open(f"/opt/pancake-tool/state/{tt}/so_viec.jsonl", encoding="utf-8"):
+    try:
+        r = json.loads(ln)
+        g = float(r.get("luc") or 0)
+    except ValueError:
+        continue
+    if g < moc or str(r.get("that")) != "1" or not (r.get("tin") or "").strip():
+        continue
+    kc = "chan" if r.get("chan") == "chan" else ("gui_hong" if str(r.get("gui_hong") or "").strip() else "da_gui")
+    print("\t".join([datetime.fromtimestamp(g, VN).strftime("%d/%m %H:%M:%S"),
+                     datetime.fromtimestamp(g, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+                     str(r.get("conv") or ""), kc, (r.get("tin") or "").replace("\n", "⏎")[:80]]))

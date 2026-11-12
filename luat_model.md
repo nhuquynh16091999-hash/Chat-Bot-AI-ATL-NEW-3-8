@@ -559,3 +559,7 @@ KÊNH GỬI (chủ shop chốt 2026-09-11, sau khi Facebook chặn 19 page vì c
    quảng cáo vạn thọ thì tin chào nói vạn thọ) và chữ khách viết. Không gửi giá, màu, cách trồng của loại này cho khách đang hỏi loại
    kia. Không rõ khách hỏi loại nào thì hỏi lại: "Anh/chị đang quan tâm hạt hồng leo hay vạn thọ ạ?". (Ca thật 12/11: khách vào từ
    quảng cáo vạn thọ hỏi "nhiêu gói", AI gửi bảng giá hồng leo — sai.)
+5. Giá cũ hồng leo "5 gói 99k / 12 gói 199k" đã BỎ từ 09/11 (tin hàng loạt gửi nhầm giá cũ cho khoảng 7–10 khách ngày
+   11–12/11). Khách nhắc giá cũ thì trả lời theo giá MỚI: 4 gói = 49k + 30k ship · 8 gói = 99k miễn ship · 15 gói = 149k miễn ship
+   (vạn thọ có thêm 20 gói = 199k miễn ship). Không nhận lại giá cũ, xin lỗi nhẹ vì tin cũ ghi nhầm.
+6. Khách vừa bấm nút chọn gói của Botcake (8 gói / 15 gói / 4 gói 79k) thì Botcake đã gửi tin xin thông tin — đừng hỏi lại combo.

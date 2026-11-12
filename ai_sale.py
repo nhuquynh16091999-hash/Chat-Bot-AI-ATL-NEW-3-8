@@ -14903,6 +14903,17 @@ def goi_soan(rec, kb_page, gia, phan_xa, quyet):
                           "TWD), tên sản phẩm giữ nguyên.\n" + tinh_huong)
     except Exception:                                  # noqa: BLE001 — thiếu dòng nhắc thì soạn như cũ
         pass
+    # 🌱 SẢN PHẨM CỦA HỘI THOẠI theo thẻ Botcake (13/11/2026, bản clone — page bán nhiều loại hạt).
+    try:
+        _sp_ = rec.get("the_sp") or []
+        if len(_sp_) == 1:
+            tinh_huong = (f"🌱 KHÁCH NÀY HỎI HẠT {_sp_[0].upper()} (thẻ Botcake gắn theo quảng cáo khách bấm) — chỉ nói giá, màu, "
+                          f"cách trồng của {_sp_[0]}; KHÔNG gửi bảng giá / màu của loại hạt khác.\n" + tinh_huong)
+        elif len(_sp_) > 1:
+            tinh_huong = ("🌱 Hội thoại mang thẻ nhiều loại hạt (" + ", ".join(_sp_) + ") — khách chưa nói rõ loại nào thì hỏi lại "
+                          "\"Anh/chị đang quan tâm hạt " + " hay ".join(x.lower() for x in _sp_) + " ạ?\" trước khi báo giá.\n" + tinh_huong)
+    except Exception:                                  # noqa: BLE001 — thiếu dòng nhắc thì soạn như cũ
+        pass
     # 📋 KHÁCH ĐÃ CHO TUỔI / CÂN NẶNG (26/09, ca Joan Agnilas Selarbac — HOI_LAI_TUOI_2609): cấm hỏi lại.
     try:
         _tc_da_ = tuoi_can_da_cho(rec["msgs"]) if quyet in ("tra_loi", "xet") else {}
@@ -15992,6 +16003,17 @@ _CUM_ANH_VIET = [
     (r"\b(?:complete|full)\s+(?:delivery\s+)?address\b", "địa chỉ đầy đủ"),
     (r"\bdelivery\s+address\b", "địa chỉ nhận hàng"),
 ]
+
+
+def _the_sp(c):
+    """Sản phẩm của hội thoại theo thẻ Botcake gắn khi khách vào ("SP Hồng leo" → "Hồng leo"). 13/11/2026, bản clone:
+    page Tổng Kho bán 2 loại hạt; 12/11 AI gửi giá hồng leo cho khách vào từ quảng cáo vạn thọ."""
+    ra = []
+    for t in (c or {}).get("tags") or []:
+        x = str((t.get("text") if isinstance(t, dict) else "") or "").strip()
+        if x.lower().startswith("sp ") and x[3:].strip() and x[3:].strip() not in ra:
+            ra.append(x[3:].strip())
+    return ra
 
 
 def viet_hoa_cum_anh(t):
@@ -22139,6 +22161,7 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
                 except Exception as e:                 # noqa: BLE001
                     print(f"{nhan} ✖ tra 'đơn của tôi' hỏng: {e} — để model xét như cũ")
             rec = {"msgs": msgs, "ten_khach": ten_khach, "thi_truong": mkey, "pid": str(pid), "conv": str(c["id"]),
+                   "the_sp": _the_sp(c),             # 13/11 — thẻ SP Botcake gắn (shop nhiều loại hạt)
                    "ho_so": ho_so_khach, "msgs_prompt": msgs_prompt,
                    "cat_bot": max(0, len(msgs) - len(msgs_prompt)), "giai_doan": gd, "ly_do": ly_do,
                    "theo_buoc": theo_buoc, "no_hoi": _no_rep(mkey, c["id"], msgs),
