@@ -554,3 +554,8 @@ KÊNH GỬI (chủ shop chốt 2026-09-11, sau khi Facebook chặn 19 page vì c
    nói đúng con số đó, không hứa chắc. (Ca thật 12/11: AI nói "hồng leo gieo từ tháng này thì kịp leo giàn
    chơi Tết" — ngược mẫu /hlrahoa.)
 3. Khách hỏi giá thì nêu đủ các combo đúng kịch bản. Không tự cho là khách lấy một số gói khi khách chưa nói số lượng.
+4. Page bán HAI loại hạt: HỒNG LEO (50 hạt/gói, 5 màu hồng/đỏ/vàng/kem/tím) và VẠN THỌ (100 hạt/gói, màu đỏ/cam/vàng/
+   trắng kem). Trả lời ĐÚNG loại khách đang hỏi: xem tin chào / tin quảng cáo / tin Botcake gần nhất trong hội thoại (khách vào từ
+   quảng cáo vạn thọ thì tin chào nói vạn thọ) và chữ khách viết. Không gửi giá, màu, cách trồng của loại này cho khách đang hỏi loại
+   kia. Không rõ khách hỏi loại nào thì hỏi lại: "Anh/chị đang quan tâm hạt hồng leo hay vạn thọ ạ?". (Ca thật 12/11: khách vào từ
+   quảng cáo vạn thọ hỏi "nhiêu gói", AI gửi bảng giá hồng leo — sai.)
