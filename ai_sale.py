@@ -15976,7 +15976,7 @@ def so_tien_kieu_viet(t):
 
 # 09/11/2026 (bản clone, shop VIỆT NAM): thị trường mà tiếng Việt CHÍNH LÀ tiếng của khách. Bộ luật gốc viết
 # cho 12 nước ngoài nên coi chữ Việt là "lọt hướng dẫn nội bộ" (cổng chặn lot_tieng_viet) trừ khi khách tự
-# viết tiếng Việt rõ — đo 09/11: 3/3 câu AI soạn đúng giá cho khách Hanh Ngo đều bị chặn. Ở các thị trường
+# viết tiếng Việt rõ — đo 09/11: 3/3 câu AI soạn đúng giá cho một khách đều bị chặn. Ở các thị trường
 # này mọi khách coi như "nhắn tiếng Việt" (VIET_2709): prompt dặn viết tiếng Việt, cổng không chặn chữ Việt.
 # Một tiến trình chỉ chạy một thị trường → cmd_theo_doi / cmd_chay ghi thị trường đang chạy vào _TT_DANG_CHAY.
 TT_TIENG_VIET = {"vietnam"}

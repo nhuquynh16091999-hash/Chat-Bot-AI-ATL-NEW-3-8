@@ -82,6 +82,8 @@ VIEC_KHI_CHAN = {
     "bao_han_som": "Khách chưa hẹn ngày quá hạn — đừng báo hạn giữ đơn trước.",
     "lot_tieng_viet": "Câu lọt tiếng Việt (hướng dẫn nội bộ) — viết lại đúng tiếng khách.",
     "lot_tieng_anh": "Câu gửi khách Việt có chữ tiếng Anh — viết lại toàn tiếng Việt.",
+    "hua_kip_tet": "Hứa hồng leo kịp Tết — kịch bản (mẫu /hlrahoa) ghi KHÔNG kịp.",
+    "hua_co_cay": "Nói shop có cây — shop chỉ bán hạt giống.",
     "khong_chot": "Câu chốt sớm giữa kịch bản tư vấn — đi đúng bước kịch bản.",
     "lap_sdt": "Câu lặp lại số điện thoại — bỏ.",
     "qua_dai": "Câu quá dài — viết 1-2 câu.",
@@ -558,6 +560,11 @@ MA_RIENG["vietnam"] = MA_VND
 TT_TIENG_VIET_CG = {"vietnam"}
 # Lời mời chốt kiểu Việt không cần dấu "?": "Anh/chị cho em xin số điện thoại và địa chỉ… nha", "gửi em… để em lên đơn".
 # Đo 12/11 trên 91 câu cũ: 18 câu xin SĐT/địa chỉ đúng bước bị khong_chot bắt viết lại chỉ vì thiếu dấu "?".
+HONG_LEO = re.compile(r"hồng\s*leo", re.I)
+# "kịp … Tết" mà KHÔNG có "không/chưa/chẳng" ngay trước "kịp" (câu đúng: "hồng leo không kịp Tết")
+HUA_KIP_TET = re.compile(r"(?<!không )(?<!chưa )(?<!chẳng )(?<!ko )kịp[^.!?\n]{0,40}t[ếe]t", re.I)
+# "Dạ có cây ạ", "bên em có bán cây" — trừ "chưa có cây", "không có cây"
+HUA_CO_CAY = re.compile(r"(?<!không )(?<!chưa )(?<!chẳng )(?<!ko )\b(?:có|còn) (?:bán |sẵn )?cây\b", re.I)
 VN_MOI_CHOT = re.compile(r"cho (?:em|con|cháu|mình) xin|xin (?:anh|chị|mình|cô|chú|bác)|gửi (?:giúp |lại )?(?:em|con|cháu)"
                          r"|để (?:em|con|cháu) (?:lên|chốt|giữ)|(?:em|con|cháu) lên đơn|lên đơn (?:luôn|cho)|chốt đơn|đặt hàng"
                          r"|giữ hàng", re.I)
@@ -1932,6 +1939,12 @@ def kiem(tin, mkey=None, kb_page=None, gia=None, tin_truoc=None, co_anh=False,
                 "tin không có chữ nào" + (" — khách sẽ chỉ nhận ảnh trơ" if co_anh else ""))
         return pq                                    # rỗng thì các luật sau vô nghĩa
 
+    # ── 2c. shop hạt giống Việt Nam: hai câu sai đã gửi thật 12/11 (luat_model.md mục VIỆT NAM) ──────────
+    if mkey in TT_TIENG_VIET_CG:
+        if HONG_LEO.search(t) and HUA_KIP_TET.search(t):
+            pq.them(NANG, "hua_kip_tet", "hứa hồng leo kịp Tết — mẫu /hlrahoa ghi hồng leo gieo từ hạt KHÔNG kịp Tết")
+        if HUA_CO_CAY.search(t):
+            pq.them(NANG, "hua_co_cay", "nói shop có cây — shop chỉ bán hạt giống, không bán cây")
     # ── 2b. thị trường tiếng Việt mà câu lọt tiếng Anh (12/11/2026, bản clone) ──────────────
     # Bộ luật + lời dặn viết cho nước ngoài, model hay mang theo "contact number", "Would you like…". Từ tiếng Anh
     # chen trong câu Việt bình thường (ship, COD, combo, mix, ok, size) KHÔNG nằm trong danh sách này.
