@@ -3816,7 +3816,7 @@ XIN_ANH_KHACH = re.compile(
     re.I | re.U)
 # Mẫu ảnh nào là ẢNH SẢN PHẨM (đo 1.348 mẫu có ảnh của 326/338 page: /chaohang 208, không tên 207,
 # /feedback 147, /hdsd 74, rồi tới loạt mẫu THANH TOÁN /paypal /venmo /moneygram…).
-_MAU_ANH_SP = re.compile(r"\bchao\s*hang\b|\bchaohang\b|\bgioi\s*thieu\b|\bgioithieu\b|\bintro\w*\b|\bproduct\w*\b"
+_MAU_ANH_SP = re.compile(r"\bchao\b|\bchao\s*hang\b|\bchaohang\b|\bgioi\s*thieu\b|\bgioithieu\b|\bintro\w*\b|\bproduct\w*\b"
                          r"|\bsan\s*pham\b|\bsanpham\b|\bttsp\b|\bthiet\s*ke\b|\bdesigns?\b|\bmau\s*ma\b"
                          r"|\bcatalog\w*\b|\bmodels?\b", re.I)
 # Hạng hai: bảng giá / combo — ảnh ở đó thường cũng là ảnh sản phẩm, nhưng nhường mẫu chào hàng.
@@ -3947,6 +3947,61 @@ def _ten_mau(m):
     return re.sub(r"[^a-z0-9]+", " ", t.lower())
 
 
+# ══ PAGE NHIỀU SẢN PHẨM — SP_THE_1311 (13/11/2026, bản clone) ═══════════════════════════════════════════════════
+# Page Tổng Kho bán 2 loại hạt trên cùng một page; mẫu trả lời nhanh chia chủ đề theo sản phẩm, tên chủ đề dạng
+# "<Sản phẩm> - <nhóm>" ("Hồng leo - giá", "Vạn thọ - chào"). Ca thật 13/11 02:10: khách hỏi "Hoa Hồng Leo giá bao
+# nhiêu?", AI báo đúng giá hồng leo nhưng kèm 2 ảnh VẠN THỌ — vì ảnh sản phẩm chọn trên kịch bản CẢ PAGE (mẫu
+# /vt15goi xếp hạng cao nhất). 12/11 còn một ca gửi bảng giá hồng leo cho khách vào từ quảng cáo vạn thọ.
+# Cách chữa: mỗi hội thoại chỉ đưa cho AI (prompt, bảng giá, ảnh) các mẫu của ĐÚNG sản phẩm khách hỏi + mẫu chung.
+# Sản phẩm lấy từ thẻ "SP …" Botcake gắn khi khách vào; không có / nhiều thẻ thì dò tên sản phẩm trong tin gần nhất.
+# Không biết sản phẩm nào → giữ kịch bản cả page nhưng KHÔNG tự chọn ảnh sản phẩm (mau_anh_cho_khach trả None).
+# Page không chia chủ đề kiểu này (mọi page nước ngoài) → không đổi gì.
+def _khoa_sp(x):
+    return re.sub(r"[^a-z0-9]+", "", qht.norm(x))
+
+
+def _sp_cua_kb(kb_page):
+    """{khoá: tên sản phẩm} đọc từ tên chủ đề "<Sản phẩm> - <nhóm>" của kịch bản."""
+    ra = {}
+    for cd in (kb_page or {}).get("chu_de") or []:
+        ten = str((cd or {}).get("ten") or "") if isinstance(cd, dict) else ""
+        if " - " in ten and _khoa_sp(ten.split(" - ")[0]):
+            ra.setdefault(_khoa_sp(ten.split(" - ")[0]), ten.split(" - ")[0].strip())
+    return ra
+
+
+def sp_cua_hoi_thoai(c, msgs, kb_page):
+    """Tên sản phẩm khách này đang hỏi, hoặc None (page một sản phẩm / chưa rõ)."""
+    cac = _sp_cua_kb(kb_page)
+    if len(cac) < 2:
+        return None
+    the = [t for t in _the_sp(c) if _khoa_sp(t) in cac]
+    if len(the) == 1:
+        return cac[_khoa_sp(the[0])]
+    for m in reversed((msgs or [])[-8:]):              # tin gần nhất nhắc đúng MỘT sản phẩm thì theo tin đó
+        chu = _khoa_sp(m.get("text"))
+        co = [k for k in cac if k in chu]
+        if len(co) == 1:
+            return cac[co[0]]
+    return None
+
+
+def kb_theo_san_pham(kb_page, sp):
+    """Kịch bản chỉ còn mẫu của sản phẩm `sp` + mẫu không thuộc sản phẩm nào. None = không lọc được."""
+    cac, k = _sp_cua_kb(kb_page), _khoa_sp(sp)
+    if len(cac) < 2 or k not in cac:
+        return None
+    def _sp_cd(ten):
+        return _khoa_sp(str(ten or "").split(" - ")[0]) if " - " in str(ten or "") else ""
+    ten_cd = {str(cd.get("id")): cd.get("ten") for cd in kb_page.get("chu_de") or [] if isinstance(cd, dict)}
+    giu = [m for m in kb_page.get("mau") or [] if _sp_cd(ten_cd.get(str(m.get("chu_de_id") or ""))) in ("", k)]
+    if not any(_sp_cd(ten_cd.get(str(m.get("chu_de_id") or ""))) == k for m in giu):
+        return None
+    return dict(kb_page, mau=giu, _sp=cac[k],
+                chu_de=[cd for cd in kb_page.get("chu_de") or []
+                        if not isinstance(cd, dict) or _sp_cd(cd.get("ten")) in ("", k)])
+
+
 def mau_anh_cho_khach(kb_page):
     """Mẫu ảnh SẢN PHẨM để gửi khi khách xin ảnh — không có thì None (lúc đó mới nhờ sale).
 
@@ -3954,6 +4009,8 @@ def mau_anh_cho_khach(kb_page):
     /chaohang (3 ảnh sản phẩm) và một mẫu không tên chủ đề 'taisaogia159' (5 ảnh tiệm vàng thu
     lại) — lấy theo số ảnh là khách xin ảnh vòng tay nhận về ảnh tiệm cầm đồ.
     """
+    if len(_sp_cua_kb(kb_page)) >= 2:                  # SP_THE_1311 — chưa rõ khách hỏi sản phẩm nào: không đoán ảnh
+        return None
     ds = [m for m in (kb_page or {}).get("mau") or [] if m.get("anh")]
     con = [m for m in ds if not _MAU_ANH_CAM.search(_ten_mau(m))]
     if not con:
@@ -21549,6 +21606,7 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
         else:
             _FB_CHAN.discard(str(pid))
         gia = bo_gia(kb_page, mkey)
+        _kb_trang_sp_, _gia_trang_sp_ = kb_page, gia      # SP_THE_1311 — mỗi hội thoại chọn lại theo sản phẩm
         theo_buoc = kich_ban_theo_buoc(kb_page)
         convs, err, tin_san = da_doc.get(pid) or ([], "chưa đọc trước", {})
         if err and qht.la_loi_token(err):
@@ -21639,6 +21697,15 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
                                     dang_doc=bool(c.get("seen")), c=c)
                 continue
             msgs, _lot_ = xep_tin_lot(c["id"], msgs)       # TIN_LOT_2609 — tin khách tới lúc AI đang gửi
+            if not tram_la(pid):                           # SP_THE_1311 — chỉ mẫu / giá / ảnh của sản phẩm khách hỏi
+                kb_page, gia = _kb_trang_sp_, _gia_trang_sp_
+                try:
+                    _sp_ht_ = sp_cua_hoi_thoai(c, msgs, _kb_trang_sp_)
+                    _kb_sp_ = kb_theo_san_pham(_kb_trang_sp_, _sp_ht_) if _sp_ht_ else None
+                    if _kb_sp_:
+                        kb_page, gia = _kb_sp_, bo_gia(_kb_sp_, mkey)
+                except Exception as _e_sp_:                # noqa: BLE001 — lọc hỏng thì dùng kịch bản cả page
+                    print(f"     ⚠️  chọn sản phẩm cho hội thoại hỏng: {_e_sp_!r} — dùng kịch bản cả page")
             if _lot_:
                 log(f"     [{(((c.get('customers') or [{}])[0].get('name')) or '?')[:20]:22s}] "
                     f"📥 {_lot_} tin khách tới lúc AI đang soạn/gửi (AI chưa đọc) — dời ra sau tin AI, lượt này trả lời")
@@ -22161,7 +22228,7 @@ def cmd_chay(mkey, page_loc=None, gio=24, so=30, that=False, cho=CHO_BOTCAKE,
                 except Exception as e:                 # noqa: BLE001
                     print(f"{nhan} ✖ tra 'đơn của tôi' hỏng: {e} — để model xét như cũ")
             rec = {"msgs": msgs, "ten_khach": ten_khach, "thi_truong": mkey, "pid": str(pid), "conv": str(c["id"]),
-                   "the_sp": _the_sp(c),             # 13/11 — thẻ SP Botcake gắn (shop nhiều loại hạt)
+                   "the_sp": ([kb_page["_sp"]] if kb_page.get("_sp") else _the_sp(c)),   # SP_THE_1311
                    "ho_so": ho_so_khach, "msgs_prompt": msgs_prompt,
                    "cat_bot": max(0, len(msgs) - len(msgs_prompt)), "giai_doan": gd, "ly_do": ly_do,
                    "theo_buoc": theo_buoc, "no_hoi": _no_rep(mkey, c["id"], msgs),
